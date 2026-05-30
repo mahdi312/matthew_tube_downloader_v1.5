@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.mst.matt.matthew_tube_downloader.controller.RootController"
+            styleClass="root-pane">
+
+    <!-- Header strip -->
+    <top>
+        <VBox styleClass="header-box" spacing="2">
+            <padding><Insets top="14" right="20" bottom="10" left="20"/></padding>
+            <Label text="Matthew Tube Downloader" styleClass="app-title"/>
+            <Label text="YouTube + generic video downloader with strategies, scheduling and tools"
+                   styleClass="app-subtitle"/>
+        </VBox>
+    </top>
+
+    <!-- TabPane carrying the 4 tabs -->
+    <center>
+        <TabPane fx:id="tabs" tabClosingPolicy="UNAVAILABLE" styleClass="main-scroll">
+            <tabs>
+                <Tab fx:id="tabDownload" text="🎬 Download" />
+                <Tab fx:id="tabQueue"    text="🗓 Queue"   />
+                <Tab fx:id="tabTools"    text="🛠 Tools"    />
+                <Tab fx:id="tabSettings" text="⚙ Settings" />
+            </tabs>
+        </TabPane>
+    </center>
+
+    <!-- Global status bar -->
+    <bottom>
+        <HBox styleClass="status-bar" spacing="12" alignment="CENTER_LEFT">
+            <padding><Insets top="6" right="16" bottom="6" left="16"/></padding>
+            <Label fx:id="statusLeftLabel"  text="" styleClass="status-bar-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="statusRightLabel" text="v1.5" styleClass="status-bar-text"/>
+        </HBox>
+    </bottom>
+</BorderPane>

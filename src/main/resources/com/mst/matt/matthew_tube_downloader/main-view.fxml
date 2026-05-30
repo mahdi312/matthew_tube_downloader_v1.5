@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.mst.matt.matthew_tube_downloader.MainController"
+            styleClass="root-pane">
+
+    <!-- ═══════════════ TOP: Header ═══════════════ -->
+    <top>
+        <VBox styleClass="header-box" spacing="4">
+            <padding><Insets top="18" right="24" bottom="14" left="24"/></padding>
+            <Label text="Matthew Tube Downloader" styleClass="app-title"/>
+            <Label text="YouTube Video &amp; Playlist Downloader" styleClass="app-subtitle"/>
+        </VBox>
+    </top>
+
+    <!-- ═══════════════ CENTER: Main Content ═══════════════ -->
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="main-scroll">
+            <VBox spacing="16" styleClass="content-box">
+                <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+
+                <!-- ── NEW v1.2: Download Strategy ── -->
+                <VBox fx:id="strategyBox" spacing="8" styleClass="section-box">
+                    <Label text="Download Strategy" styleClass="section-label"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Method:" styleClass="field-label"/>
+                        <ComboBox fx:id="strategyCombo" prefWidth="300"/>
+                        <Button fx:id="strategyInfoBtn" text="ℹ Info" onAction="#onStrategyInfo"
+                                styleClass="small-btn"/>
+                    </HBox>
+                    <Label fx:id="strategyDescLabel" text="" styleClass="status-label" wrapText="true"/>
+
+                    <!-- ─ Invidious-specific options ─ -->
+                    <VBox fx:id="invidiousBox" spacing="6" visible="false" managed="false">
+                        <Label text="Invidious / Piped Options" styleClass="field-label"/>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Instance:" styleClass="field-label"/>
+                            <TextField fx:id="invidiousInstanceField"
+                                       promptText="https://yewtu.be  (leave blank to auto-pick)"
+                                       HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                        <CheckBox fx:id="invidiousAutoRotateCheck" text="Auto-rotate through public instances if the chosen one fails"
+                                  selected="true"/>
+                    </VBox>
+
+                    <!-- ─ GitHub Actions options ─ -->
+                    <VBox fx:id="githubBox" spacing="6" visible="false" managed="false">
+                        <Label text="GitHub Actions Options" styleClass="field-label"/>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Repo:" styleClass="field-label"/>
+                            <TextField fx:id="githubRepoField"
+                                       promptText="yourname/aio-downloader" prefWidth="250"/>
+                            <Label text="Workflow:" styleClass="field-label"/>
+                            <TextField fx:id="githubWorkflowField"
+                                       text="download.yml" prefWidth="160"/>
+                            <Label text="Branch:" styleClass="field-label"/>
+                            <TextField fx:id="githubBranchField"
+                                       text="main" prefWidth="100"/>
+                        </HBox>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="PAT:" styleClass="field-label"/>
+                            <PasswordField fx:id="githubTokenField"
+                                           promptText="GitHub Personal Access Token (actions:write, contents:read)"
+                                           HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+                <!-- ── Proxy Settings (shown at start) ── -->
+                <VBox fx:id="proxyBox" spacing="8" styleClass="section-box">
+                    <Label text="Proxy Settings (Optional)" styleClass="section-label"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <CheckBox fx:id="useProxyCheck" text="Use Proxy (v2rayN / Shadowsocks SOCKS5)"/>
+                    </HBox>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Host:" styleClass="field-label"/>
+                        <TextField fx:id="proxyHostField" text="127.0.0.1" prefWidth="150"/>
+                        <Label text="Port:" styleClass="field-label"/>
+                        <TextField fx:id="proxyPortField" text="10808" prefWidth="100"/>
+                        <Label text="(v2rayN default = 10808, Clash default = 7890)" styleClass="status-label"/>
+                    </HBox>
+                </VBox>
+
+                <!-- ── URL Input ── -->
+                <VBox spacing="6" styleClass="section-box">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="Video URL" styleClass="section-label"/>
+                        <Label fx:id="siteTypeLabel" text="" styleClass="status-label"/>
+                    </HBox>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <TextField fx:id="urlField" promptText="Paste a YouTube / Vimeo / generic video URL here..."
+                                   HBox.hgrow="ALWAYS" styleClass="url-field"/>
+                        <Button fx:id="analyzeBtn" text="🔍 Analyze" onAction="#onAnalyze"
+                                styleClass="accent-btn"/>
+                        <Button fx:id="addUrlToQueueBtn" text="➕ Add URL to queue" onAction="#onAddUrlToQueue"
+                                styleClass="small-btn"/>
+                    </HBox>
+                    <Label fx:id="urlStatusLabel" text="" styleClass="status-label"/>
+                </VBox>
+
+                <!-- ── Detected Info ── -->
+                <VBox fx:id="infoBox" spacing="8" styleClass="section-box" visible="false" managed="false">
+                    <Label text="Detected Content" styleClass="section-label"/>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <Label fx:id="contentTypeLabel" text="" styleClass="badge"/>
+                        <Label fx:id="contentTitleLabel" text="" styleClass="content-title"/>
+                    </HBox>
+                </VBox>
+
+                <!-- ── Playlist Selection ── -->
+                <VBox fx:id="playlistBox" spacing="8" styleClass="section-box" visible="false" managed="false">
+                    <Label text="Playlist Videos" styleClass="section-label"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Button fx:id="selectAllBtn" text="Select All" onAction="#onSelectAll"
+                                styleClass="small-btn"/>
+                        <Button fx:id="deselectAllBtn" text="Deselect All" onAction="#onDeselectAll"
+                                styleClass="small-btn"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Range:" styleClass="field-label"/>
+                        <TextField fx:id="rangeField" promptText="e.g. 1-4, 8, 12-15"
+                                   prefWidth="180" styleClass="range-field"/>
+                        <Button fx:id="applyRangeBtn" text="Apply" onAction="#onApplyRange"
+                                styleClass="small-btn"/>
+                    </HBox>
+                    <TableView fx:id="playlistTable" prefHeight="250" styleClass="playlist-table">
+                        <columns>
+                            <TableColumn fx:id="colSelect" text="✓" prefWidth="40" sortable="false"/>
+                            <TableColumn fx:id="colIndex" text="#" prefWidth="40"/>
+                            <TableColumn fx:id="colTitle" text="Title" prefWidth="320"/>
+                            <TableColumn fx:id="colDuration" text="Duration" prefWidth="70"/>
+                            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
+                        </columns>
+                    </TableView>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label fx:id="selectionCountLabel" text="0 videos selected" styleClass="status-label" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="addSelectedToQueueBtn" text="➕ Add selected to queue"
+                                onAction="#onAddSelectedToQueue" styleClass="small-btn"/>
+                    </HBox>
+                </VBox>
+
+                <!-- ── Download Type ── -->
+                <VBox fx:id="downloadTypeBox" spacing="8" styleClass="section-box" visible="false" managed="false">
+                    <Label text="Download Type" styleClass="section-label"/>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <RadioButton fx:id="radioVideo" text="🎬 Video + Audio + Subs"
+                                     toggleGroup="$downloadTypeGroup" selected="true"/>
+                        <RadioButton fx:id="radioAudio" text="🎵 Audio Only"
+                                     toggleGroup="$downloadTypeGroup"/>
+                        <RadioButton fx:id="radioSubs" text="📝 Subtitles Only"
+                                     toggleGroup="$downloadTypeGroup"/>
+                    </HBox>
+                    <fx:define>
+                        <ToggleGroup fx:id="downloadTypeGroup"/>
+                    </fx:define>
+                </VBox>
+
+                <!-- ── Video Quality (shown when Video selected) ── -->
+                <VBox fx:id="videoQualityBox" spacing="8" styleClass="section-box" visible="false" managed="false">
+                    <Label text="Video Quality" styleClass="section-label"/>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <RadioButton fx:id="qBest" text="Best" toggleGroup="$qualityGroup" selected="true"/>
+                        <RadioButton fx:id="q1080" text="1080p" toggleGroup="$qualityGroup"/>
+                        <RadioButton fx:id="q720" text="720p" toggleGroup="$qualityGroup"/>
+                        <RadioButton fx:id="q480" text="480p" toggleGroup="$qualityGroup"/>
+                        <RadioButton fx:id="q360" text="360p" toggleGroup="$qualityGroup"/>
+                    </HBox>
+                    <fx:define>
+                        <ToggleGroup fx:id="qualityGroup"/>
+                    </fx:define>
+                </VBox>
+
+                <!-- ── Subtitle Options ── -->
+                <VBox fx:id="subtitleOptionsBox" spacing="8" styleClass="section-box" visible="false" managed="false">
+                    <Label text="Subtitle Options" styleClass="section-label"/>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <Label text="Languages:" styleClass="field-label"/>
+                        <TextField fx:id="subLangField" text="en" promptText="en,fa,ar..."
+                                   prefWidth="150"/>
+                    </HBox>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <Label text="Format:" styleClass="field-label"/>
+                        <RadioButton fx:id="subSrt" text="SRT" toggleGroup="$subFormatGroup" selected="true"/>
+                        <RadioButton fx:id="subVtt" text="VTT" toggleGroup="$subFormatGroup"/>
+                        <fx:define>
+                            <ToggleGroup fx:id="subFormatGroup"/>
+                        </fx:define>
+                    </HBox>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <Label text="Type:" styleClass="field-label"/>
+                        <RadioButton fx:id="subAll" text="All" toggleGroup="$subTypeGroup" selected="true"/>
+                        <RadioButton fx:id="subManual" text="Manual" toggleGroup="$subTypeGroup"/>
+                        <RadioButton fx:id="subAuto" text="Auto-generated" toggleGroup="$subTypeGroup"/>
+                        <fx:define>
+                            <ToggleGroup fx:id="subTypeGroup"/>
+                        </fx:define>
+                    </HBox>
+                    <CheckBox fx:id="embedSubsCheck" text="Embed subtitles in video" selected="true"/>
+                </VBox>
+
+                <!-- ── Output Settings ── -->
+                <VBox fx:id="outputBox" spacing="8" styleClass="section-box" visible="false" managed="false">
+                    <Label text="Output Settings" styleClass="section-label"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Save to:" styleClass="field-label"/>
+                        <TextField fx:id="outputDirField" promptText="Output directory"
+                                   HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="browseBtn" text="📁 Browse" onAction="#onBrowseOutput"
+                                styleClass="small-btn"/>
+                    </HBox>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Cookies:" styleClass="field-label"/>
+                        <TextField fx:id="cookiesField" promptText="cookies.txt (optional)"
+                                   HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="browseCookiesBtn" text="📁 Browse" onAction="#onBrowseCookies"
+                                styleClass="small-btn"/>
+                    </HBox>
+                </VBox>
+
+                <!-- ── Download Button ── -->
+                <HBox fx:id="downloadBtnBox" spacing="12" alignment="CENTER" visible="false" managed="false">
+                    <padding><Insets top="8" bottom="8"/></padding>
+                    <Button fx:id="downloadBtn" text="⬇ Start Download" onAction="#onStartDownload"
+                            styleClass="download-btn" prefWidth="180" prefHeight="44"/>
+                    <Button fx:id="cancelBtn" text="✖ Cancel" onAction="#onCancelDownload"
+                            styleClass="cancel-btn" prefWidth="100" prefHeight="44"
+                            visible="false" managed="false"/>
+                    <Button fx:id="openFolderBtn" text="📂 Open Folder" onAction="#onOpenOutputFolder"
+                            styleClass="small-btn" prefWidth="120" prefHeight="44"/>
+                </HBox>
+
+                <!-- ── Progress ── -->
+                <VBox fx:id="progressBox" spacing="8" styleClass="section-box" visible="false" managed="false">
+                    <Label text="Download Progress" styleClass="section-label"/>
+                    <ProgressBar fx:id="progressBar" prefWidth="Infinity" maxWidth="Infinity"
+                                 progress="0" styleClass="download-progress"/>
+                    <Label fx:id="progressLabel" text="Waiting..." styleClass="progress-label"/>
+                </VBox>
+
+                <!-- ── Log Output ── -->
+                <VBox fx:id="logBox" spacing="6" styleClass="section-box" visible="false" managed="false">
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Log Output" styleClass="section-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="saveLogBtn" text="💾 Save Log" onAction="#onSaveLog"
+                                styleClass="small-btn"/>
+                        <Button fx:id="clearLogBtn" text="Clear" onAction="#onClearLog"
+                                styleClass="small-btn"/>
+                    </HBox>
+                    <TextArea fx:id="logArea" prefHeight="180" editable="false"
+                              wrapText="true" styleClass="log-area"/>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+
+    <!-- ═══════════════ BOTTOM: Status Bar ═══════════════ -->
+    <bottom>
+        <HBox styleClass="status-bar" spacing="12" alignment="CENTER_LEFT">
+            <padding><Insets top="6" right="16" bottom="6" left="16"/></padding>
+            <Label fx:id="ytDlpStatusLabel" text="Checking yt-dlp..." styleClass="status-bar-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="v1.5" styleClass="status-bar-text"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

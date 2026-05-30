@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mst.matt</groupId>
+    <artifactId>matthew_tube_downloader</artifactId>
+    <version>1.5.0</version>
+    <packaging>jar</packaging>
+    <name>Matthew Tube Downloader</name>
+    <description>YouTube + generic video downloader with multi-strategy, scheduling, themes and queueing.</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javafx.version>17.0.14</javafx.version>
+        <main.class>com.mst.matt.matthew_tube_downloader.Launcher</main.class>
+        <app.name>MatthewTubeDownloader</app.name>
+        <app.version>1.5.0</app.version>
+        <app.vendor>Mahdi Mostafavi</app.vendor>
+    </properties>
+
+    <!-- JitPack for sealedtx/java-youtube-downloader -->
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- JavaFX — platform classifier pulls the Windows native libs automatically -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
+        <!-- Strategy 2: pure-Java YouTube downloader -->
+        <dependency>
+            <groupId>com.github.sealedtx</groupId>
+            <artifactId>java-youtube-downloader</artifactId>
+            <version>3.2.5</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- ── 1. Compiler ── -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>17</release>
+                </configuration>
+            </plugin>
+
+            <!-- ── 2. Thin JAR — manifest Class-Path points to libs/ ──
+                 This is the JAR jpackage uses as -main-jar.
+                 It must NOT contain JavaFX classes (those go in libs/ as
+                 proper named modules so JPMS can load them).               -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main.class}</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>libs/</classpathPrefix>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- ── 3. Copy ALL runtime deps (including JavaFX) into target/libs/ ──
+                 WHY include JavaFX here:
+                   Your build JDK is plain OpenJDK — it has NO JavaFX modules.
+                   jpackage only bundles what is already in the JDK it runs with.
+                   Therefore JavaFX must travel with the app inside libs/.
+                   The javaoptions below then add libs/ to the module-path so
+                   JPMS finds javafx.controls, javafx.graphics etc. at runtime.  -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-runtime-deps</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-dependencies</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                            <!-- Nothing excluded — JavaFX JARs must be in libs/
+                                 because plain OpenJDK does not ship them.       -->
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ── 4. JavaFX Maven Plugin — dev run: mvn javafx:run ── -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>com.mst.matt.matthew_tube_downloader/com.mst.matt.matthew_tube_downloader.Launcher</mainClass>
+                            <options>
+                                <option>--enable-native-access=javafx.graphics</option>
+<!--                                <option>&#45;&#45;sun-misc-unsafe-memory-access=allow</option>-->
+                                <option>-Dfile.encoding=UTF-8</option>
+                                <option>-Dsun.jnu.encoding=UTF-8</option>
+                                <option>-Dstdout.encoding=UTF-8</option>
+                                <option>-Dstderr.encoding=UTF-8</option>
+                            </options>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         JPACKAGE PROFILES
+         ───────────────────────────────────────────────────────────────────────
+         HOW THE JAVAFX MODULE-PATH WORKS IN A JPACKAGE APP:
+
+         jpackage creates a self-contained app image like this:
+           MatthewTubeDownloader/
+             app/
+               matthew_tube_downloader-1.5.0.jar   ← thin JAR (-main-jar)
+               libs/
+                 javafx-controls-17.0.14.jar        ← copied by dependency-plugin
+                 javafx-controls-17.0.14-win.jar    ← native DLL wrapper
+                 javafx-graphics-17.0.14.jar
+                 javafx-graphics-17.0.14-win.jar
+                 javafx-base-17.0.14.jar
+                 javafx-fxml-17.0.14.jar
+                 gson-2.11.0.jar
+                 ...
+             runtime/                               ← bundled JRE (no JavaFX)
+             MatthewTubeDownloader.exe              ← generated launcher
+
+         The generated launcher calls java with the javaoptions we supply.
+         $APPDIR is a jpackage macro that expands to the "app/" directory
+         at runtime, so -module-path $APPDIR/libs finds the JavaFX JARs.
+
+         PREREQUISITE (Windows only):
+           WiX Toolset 3.14 must be installed and on PATH:
+           https://github.com/wixtoolset/wix3/releases
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <profiles>
+
+        <!-- ══════════════ Windows EXE ══════════════ -->
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.akman</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>0.1.5</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-windows</id>
+                                <phase>package</phase>
+                                <goals><goal>jpackage</goal></goals>
+                                <configuration>
+                                    <name>${app.name}</name>
+                                    <appversion>${app.version}</appversion>
+                                    <vendor>${app.vendor}</vendor>
+                                    <description>YouTube + generic video downloader (single and playlist support).</description>
+                                    <copyright>2026 ${app.vendor}</copyright>
+
+                                    <mainjar>${project.build.finalName}.jar</mainjar>
+                                    <mainclass>${main.class}</mainclass>
+
+                                    <!-- -input is the directory jpackage scans for JARs.
+                                         It will pick up the thin JAR + the libs/ sub-folder. -->
+                                    <input>${project.build.directory}</input>
+                                    <dest>${project.build.directory}/installer</dest>
+
+                                    <type>EXE</type>
+
+                                    <!-- ── The critical javaoptions ──────────────────────────
+                                         -module-path $APPDIR/libs
+                                           $APPDIR is resolved by jpackage to the app/ folder
+                                           inside the installation. This is where libs/ lands.
+                                           Without this, the bundled JRE (plain OpenJDK) cannot
+                                           find javafx.controls / javafx.graphics and crashes.
+
+                                         -add-modules javafx.controls,javafx.fxml
+                                           Explicitly loads JavaFX modules from the module-path
+                                           above. Required because they are not in the JDK itself.
+
+                                         -add-opens …=ALL-UNNAMED
+                                           Allows JavaFX internal reflection on the unnamed module
+                                           (your app's thin JAR lives in the unnamed module).
+                                         ──────────────────────────────────────────────────── -->
+                                    <javaoptions>--module-path $APPDIR/libs --add-modules javafx.controls,javafx.fxml --add-opens javafx.graphics/com.sun.javafx.application=ALL-UNNAMED --add-opens javafx.base/com.sun.javafx.runtime=ALL-UNNAMED --enable-native-access=javafx.graphics -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Xmx768m</javaoptions>
+
+                                    <!-- Console window ON = you see JVM errors on launch failure.
+                                         Switch to false for a clean production build. -->
+                                    <winconsole>true</winconsole>
+                                    <windirchooser>true</windirchooser>
+                                    <winshortcut>true</winshortcut>
+                                    <winmenu>true</winmenu>
+                                    <winmenugroup>Downloader</winmenugroup>
+                                    <!-- Per-machine = installs to Program Files.
+                                         Per-user (%LOCALAPPDATA%) sometimes breaks the
+                                         bundled JRE path lookup on certain Windows versions. -->
+                                    <winperuserinstall>false</winperuserinstall>
+                                    <!-- Keep this UUID stable across ALL future releases. -->
+                                    <winupgradeuuid>3f7a1b8c-4d2e-4f5a-9b6c-1e2f3a4b5c6d</winupgradeuuid>
+
+                                    <icon>${project.basedir}/src/main/resources/com/mst/matt/matthew_tube_downloader/icon.ico</icon>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ══════════════ macOS DMG ══════════════ -->
+        <profile>
+            <id>mac</id>
+            <activation>
+                <os><family>mac</family></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.akman</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>0.1.5</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-mac</id>
+                                <phase>package</phase>
+                                <goals><goal>jpackage</goal></goals>
+                                <configuration>
+                                    <name>${app.name}</name>
+                                    <appversion>${app.version}</appversion>
+                                    <vendor>${app.vendor}</vendor>
+                                    <description>YouTube + generic video downloader (single and playlist support).</description>
+                                    <copyright>2026 ${app.vendor}</copyright>
+                                    <mainjar>${project.build.finalName}.jar</mainjar>
+                                    <mainclass>${main.class}</mainclass>
+                                    <input>${project.build.directory}</input>
+                                    <dest>${project.build.directory}/installer</dest>
+                                    <type>DMG</type>
+                                    <!-- macOS: $APPDIR expands to the app's Resources folder -->
+                                    <javaoptions>--module-path $APPDIR/libs --add-modules javafx.controls,javafx.fxml --add-opens javafx.graphics/com.sun.javafx.application=ALL-UNNAMED --add-opens javafx.base/com.sun.javafx.runtime=ALL-UNNAMED --enable-native-access=javafx.graphics -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Xmx768m</javaoptions>
+                                    <macsign>false</macsign>
+                                    <macpackagename>${app.name}</macpackagename>
+                                    <macpackageidentifier>com.mst.matt.matthew_tube_downloader</macpackageidentifier>
+                                    <icon>${project.basedir}/src/main/resources/com/mst/matt/matthew_tube_downloader/icon.icns</icon>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ══════════════ Linux DEB ══════════════ -->
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os><family>unix</family><name>linux</name></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.akman</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>0.1.5</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-linux</id>
+                                <phase>package</phase>
+                                <goals><goal>jpackage</goal></goals>
+                                <configuration>
+                                    <name>${app.name}</name>
+                                    <appversion>${app.version}</appversion>
+                                    <vendor>${app.vendor}</vendor>
+                                    <description>YouTube + generic video downloader (single and playlist support).</description>
+                                    <copyright>2026 ${app.vendor}</copyright>
+                                    <mainjar>${project.build.finalName}.jar</mainjar>
+                                    <mainclass>${main.class}</mainclass>
+                                    <input>${project.build.directory}</input>
+                                    <dest>${project.build.directory}/installer</dest>
+                                    <type>DEB</type>
+                                    <javaoptions>--module-path $APPDIR/libs --add-modules javafx.controls,javafx.fxml --add-opens javafx.graphics/com.sun.javafx.application=ALL-UNNAMED --add-opens javafx.base/com.sun.javafx.runtime=ALL-UNNAMED --enable-native-access=javafx.graphics -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Xmx768m</javaoptions>
+                                    <linuxshortcut>true</linuxshortcut>
+                                    <linuxmenugroup>AudioVideo;Network;</linuxmenugroup>
+                                    <linuxpackagename>matthew-tube-downloader</linuxpackagename>
+                                    <icon>
+                                        ${project.basedir}/src/main/resources/com/mst/matt/matthew_tube_downloader/icon.png
+                                    </icon>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+</project>

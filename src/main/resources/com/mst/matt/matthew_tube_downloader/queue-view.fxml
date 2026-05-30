@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.mst.matt.matthew_tube_downloader.controller.QueueController"
+      spacing="14" styleClass="content-box">
+    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+
+    <Label text="Scheduled Download Queue" styleClass="section-label"/>
+    <Label text="Add URLs to download later, on a schedule, or right now. Items are persisted across app restarts."
+           wrapText="true" styleClass="status-label"/>
+
+    <!-- ── Add new item ── -->
+    <VBox spacing="6" styleClass="section-box">
+        <Label text="Add to Queue" styleClass="section-label"/>
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <TextField fx:id="newUrlField" promptText="Paste a video URL (YouTube or any other site)…"
+                       HBox.hgrow="ALWAYS" styleClass="url-field"/>
+        </HBox>
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <RadioButton fx:id="modeImmediate" text="Start immediately" toggleGroup="$timingGroup" selected="true"/>
+            <RadioButton fx:id="modeManual"    text="Add as manual (start later by hand)" toggleGroup="$timingGroup"/>
+            <RadioButton fx:id="modeScheduled" text="Schedule at:" toggleGroup="$timingGroup"/>
+            <DatePicker  fx:id="schedDate" prefWidth="140"/>
+            <TextField   fx:id="schedTime" promptText="HH:mm" prefWidth="80"/>
+            <fx:define>
+                <ToggleGroup fx:id="timingGroup"/>
+            </fx:define>
+        </HBox>
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <Button fx:id="addBtn"        text="➕ Add to queue"            onAction="#onAddToQueue"      styleClass="accent-btn"/>
+            <Button fx:id="addCurrentBtn" text="📥 Add with current settings" onAction="#onAddFromCurrent" styleClass="small-btn"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="addStatusLabel" text="" styleClass="status-label"/>
+        </HBox>
+    </VBox>
+
+    <!-- ── v1.4: Concurrency + master start/stop ── -->
+    <VBox spacing="6" styleClass="section-box">
+        <Label text="Queue Control" styleClass="section-label"/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Max concurrent downloads:" styleClass="field-label"/>
+            <Spinner fx:id="concurrencySpinner" prefWidth="80" editable="true"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="autostartLabel" text="Autostart: ON" styleClass="status-label"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Button fx:id="startAllBtn"        text="▶▶ Start all"             onAction="#onStartAll"          styleClass="accent-btn"/>
+            <Button fx:id="stopAllBtn"         text="■ Stop all"               onAction="#onStopAll"           styleClass="cancel-btn"/>
+            <Button fx:id="restartAllScratchBtn" text="↺ Restart all from scratch" onAction="#onRestartAllScratch" styleClass="small-btn"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+        <Label fx:id="concurrencyHintLabel"
+               text="Stop all = pause/cancel every running item AND disable autostart. Start all = re-enable autostart and launch every queued / paused item. Restart from scratch = delete .part files first."
+               wrapText="true" styleClass="status-label"/>
+    </VBox>
+
+    <!-- ── Bulk actions on selection ── -->
+    <HBox spacing="8" alignment="CENTER_LEFT">
+        <Button fx:id="runAllBtn"          text="▶ Run selected"        onAction="#onRunAll"             styleClass="small-btn"/>
+        <Button fx:id="pauseSelectedBtn"   text="⏸ Pause selected"      onAction="#onPauseSelected"      styleClass="small-btn"/>
+        <Button fx:id="resumeSelectedBtn"  text="▶ Resume selected"     onAction="#onResumeSelected"     styleClass="small-btn"/>
+        <Button fx:id="restartScratchBtn"  text="↺ Restart selected from scratch" onAction="#onRestartSelectedScratch" styleClass="small-btn"/>
+        <Button fx:id="removeSelectedBtn"  text="✖ Remove selected"     onAction="#onRemoveSelected"     styleClass="cancel-btn"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="clearDoneBtn"       text="🧹 Clear completed"    onAction="#onClearCompleted"     styleClass="small-btn"/>
+    </HBox>
+
+    <!-- ── Queue table ── -->
+    <TableView fx:id="queueTable" prefHeight="360" styleClass="playlist-table">
+        <columns>
+            <TableColumn fx:id="colLabel"     text="Item"        prefWidth="280"/>
+            <TableColumn fx:id="colStrategy"  text="Strategy"    prefWidth="160"/>
+            <TableColumn fx:id="colScheduled" text="Scheduled"   prefWidth="140"/>
+            <TableColumn fx:id="colStatus"    text="Status"      prefWidth="100"/>
+            <TableColumn fx:id="colProgress"  text="Progress"    prefWidth="120"/>
+            <TableColumn fx:id="colMessage"   text="Last message" prefWidth="240"/>
+        </columns>
+    </TableView>
+    <Label fx:id="selectionInfoLabel" text="0 selected of 0" styleClass="status-label"/>
+</VBox>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.mst.matt.matthew_tube_downloader.controller.ToolsController"
+      spacing="14" styleClass="content-box">
+    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+
+    <Label text="System Tools &amp; Dependencies" styleClass="section-label"/>
+    <Label text="Detects whether the external tools the app uses are installed and up-to-date. Click Refresh after installing anything externally."
+           wrapText="true" styleClass="status-label"/>
+
+    <HBox spacing="8" alignment="CENTER_LEFT">
+        <Button fx:id="refreshBtn"  text="↻ Refresh all"      onAction="#onRefreshAll"  styleClass="accent-btn"/>
+        <Button fx:id="updateYtDlpBtn" text="⬆ Update yt-dlp" onAction="#onUpdateYtDlp" styleClass="small-btn"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Tip: nothing runs without your confirmation." styleClass="status-label"/>
+    </HBox>
+
+    <TableView fx:id="toolsTable" prefHeight="280" styleClass="playlist-table">
+        <columns>
+            <TableColumn fx:id="colTool"    text="Tool"    prefWidth="120"/>
+            <TableColumn fx:id="colCommand" text="Command" prefWidth="120"/>
+            <TableColumn fx:id="colVersion" text="Installed version" prefWidth="180"/>
+            <TableColumn fx:id="colLatest"  text="Latest"  prefWidth="120"/>
+            <TableColumn fx:id="colStatus"  text="Status"  prefWidth="160"/>
+            <TableColumn fx:id="colAction"  text="Action"  prefWidth="180"/>
+        </columns>
+    </TableView>
+
+    <VBox spacing="6" styleClass="section-box">
+        <Label text="Install hints (run in a terminal if a button fails)" styleClass="section-label"/>
+        <TextArea fx:id="hintsArea" editable="false" prefHeight="120" wrapText="true"
+                  styleClass="log-area"/>
+    </VBox>
+
+    <VBox spacing="6" styleClass="section-box">
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <Label text="Action log" styleClass="section-label"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="clearLogBtn" text="Clear" onAction="#onClearLog" styleClass="small-btn"/>
+        </HBox>
+        <TextArea fx:id="logArea" editable="false" prefHeight="160" wrapText="true"
+                  styleClass="log-area"/>
+    </VBox>
+</VBox>

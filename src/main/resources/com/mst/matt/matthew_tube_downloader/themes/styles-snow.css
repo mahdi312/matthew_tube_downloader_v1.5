@@ -1,0 +1,202 @@
+/* ═══════════════════════════════════════════════════════
+   Matthew Tube Downloader – WHITE SNOW THEME (v1.5)
+   Palette: white + light/sky blue, clean & airy
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Root Pane ── */
+.root-pane                    { -fx-background-color: #f4faff; }
+
+/* ── Header ── */
+.header-box {
+    -fx-background-color: linear-gradient(to right, #ffffff, #dbecff);
+    -fx-border-color: transparent transparent #a8cdf0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.app-title                    { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a; }
+.app-subtitle                 { -fx-font-size: 12px; -fx-text-fill: #5d7d9c; }
+
+/* ── Main Scroll ── */
+.main-scroll                  { -fx-background-color: transparent; -fx-background: transparent; }
+.main-scroll > .viewport      { -fx-background-color: transparent; }
+.main-scroll .scroll-bar:vertical            { -fx-background-color: transparent; }
+.main-scroll .scroll-bar:vertical .track     { -fx-background-color: #e7f1fb; -fx-background-radius: 4; }
+.main-scroll .scroll-bar:vertical .thumb     { -fx-background-color: #a8cdf0; -fx-background-radius: 4; }
+.main-scroll .scroll-bar:vertical .thumb:hover { -fx-background-color: #7eb5e6; }
+.content-box                  { -fx-background-color: transparent; }
+
+/* ── Section Box ── */
+.section-box {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10;
+    -fx-padding: 16;
+    -fx-border-color: #cfe2f5;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(120,160,200,0.18), 8, 0, 0, 2);
+}
+.section-label                { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1976d2; }
+.field-label                  { -fx-font-size: 13px; -fx-text-fill: #5d7d9c; -fx-min-width: 80; }
+
+/* ── Text Fields ── */
+.text-field, .url-field, .range-field {
+    -fx-background-color: #f4faff;
+    -fx-text-fill: #1c3d5a;
+    -fx-prompt-text-fill: #9ab2ca;
+    -fx-border-color: #cfe2f5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 12;
+    -fx-font-size: 13px;
+}
+.text-field:focused, .url-field:focused, .range-field:focused {
+    -fx-border-color: #2196f3;
+    -fx-effect: dropshadow(gaussian, rgba(33,150,243,0.25), 6, 0, 0, 0);
+}
+.url-field                    { -fx-font-size: 14px; -fx-padding: 10 14; }
+
+/* ── Buttons ── */
+.button {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #1c3d5a;
+    -fx-border-color: #cfe2f5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+.button:hover                 { -fx-background-color: #e7f1fb; }
+.button:pressed               { -fx-background-color: #cfe2f5; }
+
+.accent-btn {
+    -fx-background-color: #2196f3;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 10 20;
+    -fx-font-size: 14px;
+}
+.accent-btn:hover             { -fx-background-color: #42a5f5; }
+.accent-btn:pressed           { -fx-background-color: #1976d2; }
+
+.small-btn {
+    -fx-background-color: #e7f1fb;
+    -fx-text-fill: #1c3d5a;
+    -fx-border-color: transparent;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 6 14;
+    -fx-font-size: 12px;
+}
+.small-btn:hover              { -fx-background-color: #cfe2f5; }
+
+.download-btn {
+    -fx-background-color: linear-gradient(to bottom, #64b5f6, #1976d2);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-border-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(33,150,243,0.35), 8, 0, 0, 2);
+}
+.download-btn:hover           { -fx-background-color: linear-gradient(to bottom, #90caf9, #2196f3); }
+.download-btn:pressed         { -fx-background-color: linear-gradient(to bottom, #1976d2, #0d47a1); }
+.download-btn:disabled        { -fx-background-color: #cfe2f5; -fx-text-fill: #9ab2ca; -fx-effect: none; }
+
+.cancel-btn {
+    -fx-background-color: linear-gradient(to bottom, #ef9a9a, #e57373);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-border-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+.cancel-btn:hover             { -fx-background-color: linear-gradient(to bottom, #ffcdd2, #ef9a9a); }
+
+/* ── Radio Buttons ── */
+.radio-button                 { -fx-text-fill: #1c3d5a; -fx-font-size: 13px; }
+.radio-button .radio          { -fx-background-color: #ffffff; -fx-border-color: #cfe2f5; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 3; }
+.radio-button:selected .radio { -fx-border-color: #2196f3; }
+.radio-button .dot            { -fx-background-color: transparent; -fx-background-radius: 5; -fx-padding: 3; }
+.radio-button:selected .dot   { -fx-background-color: #2196f3; }
+
+/* ── Check Boxes ── */
+.check-box                    { -fx-text-fill: #1c3d5a; -fx-font-size: 13px; }
+.check-box .box               { -fx-background-color: #ffffff; -fx-border-color: #cfe2f5; -fx-border-radius: 3; -fx-background-radius: 3; -fx-padding: 3; }
+.check-box:selected .box      { -fx-background-color: #2196f3; -fx-border-color: #2196f3; }
+.check-box:selected .mark     { -fx-background-color: white; }
+
+/* ── Table View ── */
+.playlist-table               { -fx-background-color: #ffffff; -fx-border-color: #cfe2f5; -fx-border-radius: 6; -fx-background-radius: 6; }
+.playlist-table .column-header-background { -fx-background-color: #dbecff; }
+.playlist-table .column-header { -fx-background-color: transparent; -fx-border-color: transparent transparent #cfe2f5 transparent; }
+.playlist-table .column-header .label { -fx-text-fill: #1976d2; -fx-font-weight: bold; -fx-font-size: 12px; }
+.playlist-table .table-row-cell { -fx-background-color: transparent; -fx-border-color: transparent transparent #e7f1fb transparent; }
+.playlist-table .table-row-cell:odd      { -fx-background-color: rgba(33,150,243,0.04); }
+.playlist-table .table-row-cell:selected { -fx-background-color: rgba(33,150,243,0.18); }
+.playlist-table .table-row-cell:hover    { -fx-background-color: rgba(33,150,243,0.08); }
+.playlist-table .table-cell   { -fx-text-fill: #1c3d5a; -fx-font-size: 12px; -fx-padding: 6 8; }
+.table-view .placeholder .label { -fx-text-fill: #9ab2ca; }
+
+/* ── Progress Bar ── */
+.download-progress            { -fx-pref-height: 20; }
+.download-progress .track     { -fx-background-color: #e7f1fb; -fx-background-radius: 10; -fx-border-radius: 10; }
+.download-progress .bar       { -fx-background-color: linear-gradient(to right, #64b5f6, #1976d2); -fx-background-radius: 10; -fx-background-insets: 1; }
+.progress-label               { -fx-text-fill: #5d7d9c; -fx-font-size: 12px; }
+
+/* ── Log Area ── */
+.log-area {
+    -fx-background-color: #f4faff;
+    -fx-text-fill: #1c3d5a;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-border-color: #cfe2f5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+.log-area .content            { -fx-background-color: #f4faff; }
+
+/* ── Status Labels ── */
+.status-label                 { -fx-text-fill: #5d7d9c; -fx-font-size: 12px; }
+.badge                        { -fx-background-color: #2196f3; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3 10; -fx-background-radius: 12; }
+.content-title                { -fx-text-fill: #1c3d5a; -fx-font-size: 14px; -fx-font-weight: bold; }
+
+/* ── Status Bar ── */
+.status-bar                   { -fx-background-color: #e7f1fb; -fx-border-color: #cfe2f5 transparent transparent transparent; -fx-border-width: 1 0 0 0; }
+.status-bar-text              { -fx-text-fill: #5d7d9c; -fx-font-size: 11px; }
+
+/* ── Tooltip ── */
+.tooltip                      { -fx-background-color: #1c3d5a; -fx-text-fill: #ffffff; -fx-font-size: 12px; -fx-background-radius: 4; -fx-border-radius: 4; }
+
+/* ── Scroll Pane inside table ── */
+.table-view .scroll-bar:vertical .track,
+.table-view .scroll-bar:horizontal .track  { -fx-background-color: #e7f1fb; }
+.table-view .scroll-bar:vertical .thumb,
+.table-view .scroll-bar:horizontal .thumb  { -fx-background-color: #a8cdf0; -fx-background-radius: 4; }
+.table-view .filler                        { -fx-background-color: #dbecff; }
+.table-view .column-header-background .filler { -fx-background-color: #dbecff; }
+
+/* ── ComboBox / Spinner / DatePicker / ColorPicker ── */
+.combo-box-base, .spinner, .date-picker, .color-picker {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #1c3d5a;
+    -fx-border-color: #cfe2f5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+.combo-box-base .list-cell    { -fx-text-fill: #1c3d5a; -fx-background-color: transparent; }
+.combo-box .arrow             { -fx-background-color: #1976d2; }
+.combo-box-popup .list-view   { -fx-background-color: #ffffff; -fx-border-color: #cfe2f5; }
+.combo-box-popup .list-view .list-cell { -fx-text-fill: #1c3d5a; -fx-background-color: transparent; }
+.combo-box-popup .list-view .list-cell:hover    { -fx-background-color: #e7f1fb; }
+.combo-box-popup .list-view .list-cell:selected { -fx-background-color: #2196f3; -fx-text-fill: white; }
+
+/* ── Tab Pane ── */
+.tab-pane .tab                { -fx-background-color: #dbecff; }
+.tab-pane .tab:selected       { -fx-background-color: #ffffff; }
+.tab-pane .tab .tab-label     { -fx-text-fill: #1c3d5a; }
+.tab-pane .tab-header-area .headers-region .tab .focus-indicator { -fx-border-color: transparent; }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.mst.matt.matthew_tube_downloader.controller.QualityPickerController"
+      spacing="10" styleClass="content-box" prefWidth="900" prefHeight="540">
+    <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
+
+    <Label text="Choose a format / quality" styleClass="section-label"/>
+    <Label fx:id="headerLabel" text="" wrapText="true" styleClass="status-label"/>
+
+    <TableView fx:id="formatsTable" prefHeight="380" styleClass="playlist-table">
+        <columns>
+            <TableColumn fx:id="colId"         text="ID"          prefWidth="80"/>
+            <TableColumn fx:id="colKind"       text="Kind"        prefWidth="80"/>
+            <TableColumn fx:id="colResolution" text="Resolution"  prefWidth="110"/>
+            <TableColumn fx:id="colFps"        text="FPS"         prefWidth="60"/>
+            <TableColumn fx:id="colCodec"      text="Codec"       prefWidth="200"/>
+            <TableColumn fx:id="colExt"        text="Ext"         prefWidth="60"/>
+            <TableColumn fx:id="colBitrate"    text="Bitrate"     prefWidth="80"/>
+            <TableColumn fx:id="colSize"       text="Size"        prefWidth="100"/>
+            <TableColumn fx:id="colNote"       text="Note"        prefWidth="180"/>
+        </columns>
+    </TableView>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Label fx:id="footerLabel" text="" styleClass="status-label" HBox.hgrow="ALWAYS"/>
+        <Button fx:id="cancelBtn" text="Cancel"  onAction="#onCancel" styleClass="cancel-btn"/>
+        <Button fx:id="okBtn"     text="Use selected format" onAction="#onOk" styleClass="accent-btn"/>
+    </HBox>
+</VBox>

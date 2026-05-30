@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<ScrollPane xmlns:fx="http://javafx.com/fxml" fitToWidth="true" styleClass="main-scroll"
+            fx:controller="com.mst.matt.matthew_tube_downloader.controller.SettingsController">
+    <VBox spacing="14" styleClass="content-box">
+        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+
+        <Label text="Application Settings" styleClass="section-label"/>
+        <Label text="Persisted to settings.json in your user config directory. Changes apply immediately when you click Save."
+               wrapText="true" styleClass="status-label"/>
+
+        <!-- ── Feature toggles ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="Feature toggles" styleClass="section-label"/>
+            <CheckBox fx:id="enableProxyCheck"        text="Show proxy section on Download tab"/>
+            <CheckBox fx:id="enableSchedulerCheck"    text="Start the scheduler thread on app launch"/>
+            <CheckBox fx:id="autoCheckYtDlpCheck"     text="Check yt-dlp for updates on startup (notify only)"/>
+            <CheckBox fx:id="rememberWindowSizeCheck" text="Remember window size between sessions"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Max concurrent downloads:" styleClass="field-label"/>
+                <Spinner fx:id="maxConcurrentSpinner" prefWidth="80" editable="true"/>
+                <Label text="(1 = sequential, 8 = max)" styleClass="status-label"/>
+            </HBox>
+        </VBox>
+
+        <!-- ── Defaults for new downloads ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="Defaults for new downloads" styleClass="section-label"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Strategy:" styleClass="field-label"/>
+                <ComboBox fx:id="defaultStrategyCombo" prefWidth="240"/>
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Output dir:" styleClass="field-label"/>
+                <TextField fx:id="defaultOutputDirField" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="browseOutputBtn" text="📁 Browse" onAction="#onBrowseOutput" styleClass="small-btn"/>
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Type:" styleClass="field-label"/>
+                <ComboBox fx:id="defaultTypeCombo" prefWidth="150"/>
+                <Label text="Quality:" styleClass="field-label"/>
+                <ComboBox fx:id="defaultQualityCombo" prefWidth="120"/>
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Subtitle langs:" styleClass="field-label"/>
+                <TextField fx:id="defaultSubLangsField" prefWidth="150"/>
+                <Label text="Format:" styleClass="field-label"/>
+                <ComboBox fx:id="defaultSubFormatCombo" prefWidth="100"/>
+                <Label text="Type:" styleClass="field-label"/>
+                <ComboBox fx:id="defaultSubTypeCombo" prefWidth="120"/>
+                <CheckBox fx:id="defaultEmbedSubsCheck" text="Embed in video"/>
+            </HBox>
+        </VBox>
+
+        <!-- ── Proxy defaults ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="Proxy defaults" styleClass="section-label"/>
+            <CheckBox fx:id="defaultUseProxyCheck" text="Use proxy by default"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Host:" styleClass="field-label"/>
+                <TextField fx:id="defaultProxyHostField" prefWidth="180"/>
+                <Label text="Port:" styleClass="field-label"/>
+                <TextField fx:id="defaultProxyPortField" prefWidth="100"/>
+            </HBox>
+        </VBox>
+
+        <!-- ── Strategy-specific defaults ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="Strategy-specific defaults" styleClass="section-label"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Invidious instance:" styleClass="field-label"/>
+                <TextField fx:id="invidiousInstanceField" HBox.hgrow="ALWAYS"
+                           promptText="https://yewtu.be  (blank = auto)"/>
+            </HBox>
+            <CheckBox fx:id="invidiousAutoRotateCheck" text="Auto-rotate through Invidious instances"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="GitHub repo:" styleClass="field-label"/>
+                <TextField fx:id="githubRepoField"    prefWidth="220" promptText="user/aio-downloader"/>
+                <Label text="Workflow:" styleClass="field-label"/>
+                <TextField fx:id="githubWorkflowField" prefWidth="140"/>
+                <Label text="Branch:" styleClass="field-label"/>
+                <TextField fx:id="githubBranchField"   prefWidth="100"/>
+            </HBox>
+            <Label text="GitHub PAT is intentionally NEVER saved to disk — enter it per session on the Download tab."
+                   wrapText="true" styleClass="status-label"/>
+        </VBox>
+
+        <!-- ── Theme (v1.5) ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="Theme" styleClass="section-label"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Theme:" styleClass="field-label"/>
+                <ComboBox fx:id="themeCombo" prefWidth="200"/>
+            </HBox>
+            <Label fx:id="themePreviewLabel" text="" wrapText="true" styleClass="status-label"/>
+            <Label text="Switching the combo live-previews the theme; click Save to keep it, Reload to revert."
+                   wrapText="true" styleClass="status-label"/>
+        </VBox>
+
+        <!-- ── Buttons ── -->
+        <HBox spacing="12" alignment="CENTER_RIGHT">
+            <Label fx:id="statusLabel" text="" styleClass="status-label" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="resetBtn"   text="↺ Reset to defaults" onAction="#onReset"      styleClass="small-btn"/>
+            <Button fx:id="reloadBtn"  text="↻ Reload from disk"  onAction="#onReload"     styleClass="small-btn"/>
+            <Button fx:id="saveBtn"    text="💾 Save"             onAction="#onSave"       styleClass="accent-btn"/>
+        </HBox>
+    </VBox>
+</ScrollPane>
