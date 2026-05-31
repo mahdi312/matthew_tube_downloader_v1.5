@@ -116,6 +116,25 @@
                    wrapText="true" styleClass="status-label"/>
         </VBox>
 
+        <!-- ── Queue / Scheduler schedule-window defaults ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="Queue Schedule Window" styleClass="section-label"/>
+            <Label text="Set a default daily time window for scheduled downloads. When enabled, URLs added to the queue from the Download tab will be scheduled at the Start Time instead of starting immediately."
+                   wrapText="true" styleClass="status-label"/>
+            <CheckBox fx:id="queueUseScheduleWindowCheck"
+                      text="Use schedule window for new queue items (overrides immediate start)"/>
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="Default Start Time (HH:mm):" styleClass="field-label"/>
+                <TextField fx:id="queueStartTimeField" prefWidth="90"
+                           promptText="e.g. 02:00"/>
+                <Label text="Default End Time (HH:mm):" styleClass="field-label"/>
+                <TextField fx:id="queueEndTimeField" prefWidth="90"
+                           promptText="e.g. 06:00"/>
+            </HBox>
+            <Label text="Start Time: the time items added to the queue will be scheduled to begin downloading (today if still in the future, otherwise tomorrow). End Time: the scheduler will not start new items after this time each day (leave blank for no restriction)."
+                   wrapText="true" styleClass="status-label"/>
+        </VBox>
+
         <!-- ── Theme (v1.5) ── -->
         <VBox spacing="8" styleClass="section-box">
             <Label text="Theme" styleClass="section-label"/>

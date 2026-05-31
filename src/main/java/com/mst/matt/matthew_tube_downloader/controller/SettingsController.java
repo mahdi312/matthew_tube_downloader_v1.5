@@ -54,6 +54,11 @@ public class SettingsController {
     @FXML private TextField githubWorkflowField;
     @FXML private TextField githubBranchField;
 
+    // ── Queue schedule window ──
+    @FXML private CheckBox queueUseScheduleWindowCheck;
+    @FXML private TextField queueStartTimeField;
+    @FXML private TextField queueEndTimeField;
+
     /** v1.5: theme combo replaces v1.4 ColorPicker. */
     @FXML private ComboBox<ThemeManager.Theme> themeCombo;
     @FXML private Label themePreviewLabel;
@@ -122,6 +127,11 @@ public class SettingsController {
         githubWorkflowField.setText(s.githubDefaultWorkflow);
         githubBranchField.setText(s.githubDefaultBranch);
 
+        // Queue schedule window
+        queueUseScheduleWindowCheck.setSelected(s.queueUseScheduleWindow);
+        queueStartTimeField.setText(s.queueDefaultStartTime != null ? s.queueDefaultStartTime : "");
+        queueEndTimeField.setText(s.queueDefaultEndTime != null ? s.queueDefaultEndTime : "");
+
         // v1.5: theme
         themeCombo.setValue(ThemeManager.Theme.fromName(s.themeName));
         themePreviewLabel.setText("Active theme: " + themeCombo.getValue().displayName);
@@ -169,6 +179,11 @@ public class SettingsController {
         s.githubDefaultRepo          = githubRepoField.getText().trim();
         s.githubDefaultWorkflow      = githubWorkflowField.getText().trim();
         s.githubDefaultBranch        = githubBranchField.getText().trim();
+
+        // Queue schedule window
+        s.queueUseScheduleWindow = queueUseScheduleWindowCheck.isSelected();
+        s.queueDefaultStartTime  = queueStartTimeField.getText().trim();
+        s.queueDefaultEndTime    = queueEndTimeField.getText().trim();
 
         // v1.5: theme
         ThemeManager.Theme t = themeCombo.getValue();

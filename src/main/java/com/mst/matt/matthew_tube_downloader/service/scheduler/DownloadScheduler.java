@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +157,17 @@ public class DownloadScheduler {
         Platform.runLater(() -> items.add(item));
         QueuePersistence.save(snapshot());
         globalLog.accept("[scheduler] added: " + item.label);
+        // If the item is already due (scheduledAt is now or in the past) and autostart
+        // is enabled, kick it off immediately instead of waiting up to 15 s for the tick.
+        if (autostartEnabled
+                && item.status == QueueItem.Status.QUEUED
+                && item.scheduledAt != null
+                && item.scheduledAt > 0
+                && item.scheduledAt <= System.currentTimeMillis()
+                && isWithinScheduleWindow()) {
+            globalLog.accept("[scheduler] immediately starting due item: " + item.label);
+            startItem(item);
+        }
     }
 
     public synchronized void remove(QueueItem item) {
@@ -324,6 +337,7 @@ public class DownloadScheduler {
     private void tick() {
         try {
             if (!autostartEnabled) return;            // v1.4: respect stop-all switch
+            if (!isWithinScheduleWindow()) return;   // respect configured end-time window
             long now = System.currentTimeMillis();
             for (QueueItem it : List.copyOf(items)) {
                 if (it.status == QueueItem.Status.QUEUED
@@ -337,6 +351,34 @@ public class DownloadScheduler {
             }
         } catch (Throwable t) {
             globalLog.accept("[scheduler] tick error: " + t.getMessage());
+        }
+    }
+
+    /**
+     * Returns true when the current wall-clock time falls inside the user-configured
+     * schedule window.  If no end-time is configured (or window is disabled) this
+     * always returns true so the scheduler runs unrestricted.
+     *
+     * Logic:
+     *   - If queueUseScheduleWindow is false  → always true (no restriction).
+     *   - If queueDefaultEndTime is blank     → always true (no upper bound).
+     *   - Otherwise: current local time must be before the end-time.
+     *     (Start-time is not enforced here — it is baked into scheduledAt at add-time.)
+     */
+    private boolean isWithinScheduleWindow() {
+        try {
+            AppSettings s = SettingsManager.load();
+            if (!s.queueUseScheduleWindow) return true;
+            String endStr = s.queueDefaultEndTime;
+            if (endStr == null || endStr.isBlank()) return true;
+            LocalTime endTime = LocalTime.parse(endStr.trim(),
+                    DateTimeFormatter.ofPattern("H:mm").withResolverStyle(
+                            java.time.format.ResolverStyle.LENIENT));
+            LocalTime now = LocalTime.now();
+            return now.isBefore(endTime);
+        } catch (Exception e) {
+            // If parsing fails, don't block anything.
+            return true;
         }
     }
 

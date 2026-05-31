@@ -55,6 +55,33 @@ public class AppSettings {
     public String  githubDefaultBranch = "main";
     // GitHub PAT is NEVER persisted to disk on purpose. User enters it per session.
 
+    // ── Queue / Scheduler schedule-window defaults ──
+    /**
+     * Default queue start-time in "HH:mm" format (24-hour).
+     * When a URL is added to the queue from the Download tab (or from Queue tab
+     * with "Schedule at" mode), the scheduled start time of that item defaults to
+     * today at this hour:minute if the configured time is still in the future,
+     * otherwise tomorrow at this hour:minute.
+     *
+     * Empty string / null  = use "immediate" (current time) as the default.
+     */
+    public String queueDefaultStartTime = "";
+
+    /**
+     * Default queue end-time in "HH:mm" format (24-hour).
+     * Purely informational / UI hint for now — the scheduler will not start NEW
+     * items whose scheduledAt is past the window end for the day.
+     * Empty string / null  = no end-time restriction.
+     */
+    public String queueDefaultEndTime = "";
+
+    /**
+     * When true, items added to the queue from the Download tab are scheduled
+     * using {@link #queueDefaultStartTime} instead of being set to "immediate".
+     * When false (or queueDefaultStartTime is blank) items start immediately.
+     */
+    public boolean queueUseScheduleWindow = false;
+
     // ── Theme (v1.5: real theme switching, not just an accent color) ──
     /** "DRACULA", "JUNGLE", or "SNOW". See {@link ThemeManager.Theme}. */
     public String themeName = "DRACULA";
@@ -96,6 +123,9 @@ public class AppSettings {
         c.windowWidth = windowWidth;
         c.windowHeight = windowHeight;
         c.maxConcurrentDownloads = maxConcurrentDownloads;
+        c.queueDefaultStartTime = queueDefaultStartTime;
+        c.queueDefaultEndTime = queueDefaultEndTime;
+        c.queueUseScheduleWindow = queueUseScheduleWindow;
         return c;
     }
 }
