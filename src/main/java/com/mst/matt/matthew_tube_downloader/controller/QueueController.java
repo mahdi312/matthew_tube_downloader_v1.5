@@ -183,6 +183,11 @@ public class QueueController {
         c.setStrategy(s.defaultStrategy);
         c.setOutputDir(s.defaultOutputDir);
         c.setDownloadType(s.defaultDownloadType);
+        if (s.defaultDownloadType != null) {
+            c.setWantVideo(s.defaultDownloadType == DownloadConfig.DownloadType.VIDEO);
+            c.setWantAudio(s.defaultDownloadType == DownloadConfig.DownloadType.AUDIO);
+            c.setWantSubtitles(s.defaultDownloadType == DownloadConfig.DownloadType.SUBTITLES);
+        }
         c.setVideoQuality(s.defaultQuality);
         c.setSubtitleLanguages(s.defaultSubtitleLangs);
         c.setSubFormat(s.defaultSubFormat);
@@ -191,6 +196,8 @@ public class QueueController {
         c.setUseProxy(s.defaultUseProxy);
         c.setProxyHost(s.defaultProxyHost);
         c.setProxyPort(s.defaultProxyPort);
+        String cookies = SettingsManager.resolveCookiesPath(null);
+        if (cookies != null) c.setCookiesPath(cookies);
         c.setInvidiousInstance(s.invidiousDefaultInstance);
         c.setInvidiousAutoRotate(s.invidiousDefaultAutoRotate);
         c.setGithubRepo(s.githubDefaultRepo);

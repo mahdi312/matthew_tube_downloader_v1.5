@@ -4,6 +4,7 @@ import com.mst.matt.matthew_tube_downloader.HelloApplication;
 import com.mst.matt.matthew_tube_downloader.controller.QualityPickerController;
 import com.mst.matt.matthew_tube_downloader.model.DownloadConfig;
 import com.mst.matt.matthew_tube_downloader.model.VideoInfo;
+import com.mst.matt.matthew_tube_downloader.model.VideoQualityOption;
 import com.mst.matt.matthew_tube_downloader.service.DownloadTask;
 import com.mst.matt.matthew_tube_downloader.service.YtDlpService;
 import com.mst.matt.matthew_tube_downloader.service.extractor.FormatInfo;
@@ -69,21 +70,16 @@ public class MainController {
     @FXML private TextField rangeField;
     @FXML private Label selectionCountLabel;
 
-    // ── Download Type ──
+    // ── Download Type (multi-select) ──
     @FXML private VBox downloadTypeBox;
-    @FXML private RadioButton radioVideo;
-    @FXML private RadioButton radioAudio;
-    @FXML private RadioButton radioSubs;
-    @FXML private ToggleGroup downloadTypeGroup;
+    @FXML private CheckBox checkVideo;
+    @FXML private CheckBox checkAudio;
+    @FXML private CheckBox checkSubs;
 
-    // ── Video Quality ──
+    // ── Video Quality (dynamic) ──
     @FXML private VBox videoQualityBox;
-    @FXML private RadioButton qBest;
-    @FXML private RadioButton q1080;
-    @FXML private RadioButton q720;
-    @FXML private RadioButton q480;
-    @FXML private RadioButton q360;
-    @FXML private ToggleGroup qualityGroup;
+    @FXML private ComboBox<VideoQualityOption> qualityCombo;
+    @FXML private Label qualityHintLabel;
 
     // ── Subtitle Options ──
     @FXML private VBox subtitleOptionsBox;
@@ -183,8 +179,12 @@ public class MainController {
         setupPlaylistTable();
 
         // Listen for download type changes
-        downloadTypeGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) ->
-                updateOptionsVisibility());
+        checkVideo.selectedProperty().addListener((obs, o, n) -> updateOptionsVisibility());
+        checkAudio.selectedProperty().addListener((obs, o, n) -> updateOptionsVisibility());
+        checkSubs.selectedProperty().addListener((obs, o, n) -> updateOptionsVisibility());
+
+        qualityCombo.setItems(FXCollections.observableArrayList(VideoQualityOption.bestFallback()));
+        qualityCombo.getSelectionModel().selectFirst();
 
         // v1.5: live site-type detection while the user types.
         urlField.textProperty().addListener((obs, oldV, newV) -> updateSiteTypeBadge(newV));
@@ -357,14 +357,21 @@ public class MainController {
 
     @FXML
     private void onAnalyze() {
-        String url = urlField.getText().trim();
+        String url = YtDlpService.normalizeYoutubeUrl(urlField.getText().trim());
         if (url.isEmpty()) {
             urlStatusLabel.setText("⚠ Please enter a URL");
             urlStatusLabel.setStyle("-fx-text-fill: #ff9800;");
             return;
         }
+        if (!url.equals(urlField.getText().trim())) {
+            urlField.setText(url);
+        }
 
         String proxyUrl = buildProxyUrl();
+        final String cookiesPath = SettingsManager.resolveCookiesPath(
+                cookiesField.getText() == null ? "" : cookiesField.getText().trim());
+        final String invidiousInstance = invidiousInstanceField.getText() == null
+                ? "" : invidiousInstanceField.getText().trim();
 
         resetAnalysis();
         analyzeBtn.setDisable(true);
@@ -373,6 +380,7 @@ public class MainController {
         showSection(logBox, true);
         log("Analyzing: " + url);
         if (proxyUrl != null) log("Using proxy: " + proxyUrl);
+        if (cookiesPath != null) log("Using cookies: " + cookiesPath);
 
         // Analysis still uses yt-dlp when available, regardless of chosen download strategy
         // (because yt-dlp gives the richest metadata + playlist enumeration).
@@ -418,31 +426,43 @@ public class MainController {
                     return null;
                 }
 
-                String playlistTitle = ytDlpService.detectPlaylistTitle(url, proxyUrl);
-                if (playlistTitle != null) {
+                String playlistTitle = null;
+                List<VideoInfo> entries = List.of();
+                if (YtDlpService.urlLooksLikeExplicitPlaylist(url)) {
+                    playlistTitle = ytDlpService.detectPlaylistTitle(url, proxyUrl, cookiesPath);
+                    entries = ytDlpService.fetchPlaylistEntries(url, proxyUrl, cookiesPath);
+                }
+
+                if (YtDlpService.urlLooksLikeExplicitPlaylist(url)
+                        && entries.size() > 1
+                        && YtDlpService.isUsableTitle(playlistTitle)) {
+                    final String title = playlistTitle;
+                    final List<VideoInfo> playlist = entries;
                     Platform.runLater(() -> {
                         isPlaylist = true;
                         contentTypeLabel.setText("PLAYLIST");
-                        contentTitleLabel.setText(playlistTitle);
+                        contentTitleLabel.setText(title);
                         showSection(infoBox, true);
-                        log("Detected playlist: " + playlistTitle);
+                        log("Detected playlist: " + title);
                         urlStatusLabel.setText("🔄 Loading playlist entries...");
                     });
-                    List<VideoInfo> entries = ytDlpService.fetchPlaylistEntries(url, proxyUrl);
                     Platform.runLater(() -> {
-                        playlistEntries.setAll(entries);
+                        playlistEntries.setAll(playlist);
                         showSection(playlistBox, true);
                         updateSelectionCount();
-                        log("Found " + entries.size() + " videos in playlist.");
+                        log("Found " + playlist.size() + " videos in playlist.");
                     });
                 } else {
-                    String title = ytDlpService.getVideoTitle(url, proxyUrl);
+                    String title = ytDlpService.getVideoTitle(url, proxyUrl, cookiesPath, invidiousInstance);
                     Platform.runLater(() -> {
                         isPlaylist = false;
                         contentTypeLabel.setText("VIDEO");
                         contentTitleLabel.setText(title);
                         showSection(infoBox, true);
                         log("Detected single video: " + title);
+                        if (title != null && title.contains("unavailable")) {
+                            log("Tip: set cookies.txt in Settings (or Download tab override), enable proxy, then Analyze again.");
+                        }
                     });
                 }
                 return null;
@@ -459,6 +479,9 @@ public class MainController {
             showSection(downloadBtnBox, true);
             showSection(logBox, true);
             updateOptionsVisibility();
+            if (isYouTube && canUseYtDlp) {
+                refreshAvailableQualities(url, proxyUrl, cookiesPath);
+            }
         });
 
         analyzeTask.setOnFailed(e -> {
@@ -586,8 +609,23 @@ public class MainController {
             }
         });
 
-        currentDownloadTask.setOnSucceeded(e ->
-                onDownloadFinished("Download completed successfully!", true));
+        currentDownloadTask.setOnSucceeded(e -> {
+            Integer exit = currentDownloadTask.getValue();
+            String lastMsg = currentDownloadTask.getMessage();
+            if (exit != null && exit == 0) {
+                onDownloadFinished(
+                        lastMsg != null && !lastMsg.isBlank() ? lastMsg : "Download completed successfully!",
+                        true);
+            } else if (exit != null && exit == -1) {
+                onDownloadFinished("Download cancelled by user.", false);
+            } else {
+                onDownloadFinished(
+                        lastMsg != null && !lastMsg.isBlank()
+                                ? lastMsg
+                                : "Download failed (exit code " + exit + "). See log for yt-dlp errors.",
+                        false);
+            }
+        });
         currentDownloadTask.setOnFailed(e -> {
             Throwable ex = currentDownloadTask.getException();
             onDownloadFinished("Download failed: " + (ex != null ? ex.getMessage() : "unknown"), false);
@@ -654,12 +692,19 @@ public class MainController {
 
     private void onDownloadFinished(String message, boolean success) {
         progressBar.progressProperty().unbind();
-        if (success) progressBar.setProgress(1.0);
+        if (success) {
+            progressBar.setProgress(1.0);
+        } else {
+            progressBar.setProgress(0);
+        }
         progressLabel.setText(message);
         downloadBtn.setDisable(false);
         openFolderBtn.setDisable(false);
         showSection(cancelBtn, false);
-        log(message);
+        // Final message already logged by the task message listener — avoid duplicate line.
+        if (!success) {
+            log("Tip: update yt-dlp (`yt-dlp -U`), refresh cookies.txt, or try Invidious strategy if formats fail.");
+        }
         log("═".repeat(60));
     }
 
@@ -690,31 +735,37 @@ public class MainController {
         if (outDir.isEmpty()) outDir = System.getProperty("user.home") + File.separator + "Downloads";
         config.setOutputDir(outDir);
 
-        // ── Cookies ──
-        String cookies = cookiesField.getText().trim();
-        if (!cookies.isEmpty()) config.setCookiesPath(cookies);
+        // ── Cookies (Download tab override, else Settings default when file exists) ──
+        String cookies = SettingsManager.resolveCookiesPath(cookiesField.getText().trim());
+        if (cookies != null) config.setCookiesPath(cookies);
 
         // ── Proxy ──
         config.setUseProxy(useProxyCheck.isSelected());
         config.setProxyHost(proxyHostField.getText().trim());
         config.setProxyPort(proxyPortField.getText().trim());
 
-        // ── Type ──
-        if (radioVideo.isSelected())      config.setDownloadType(DownloadConfig.DownloadType.VIDEO);
-        else if (radioAudio.isSelected()) config.setDownloadType(DownloadConfig.DownloadType.AUDIO);
+        // ── Types (multi-select) ──
+        if (!checkVideo.isSelected() && !checkAudio.isSelected() && !checkSubs.isSelected()) {
+            showAlert("No Selection", "Select at least one download type (Video, Audio, or Subtitles).");
+            return null;
+        }
+        config.setWantVideo(checkVideo.isSelected());
+        config.setWantAudio(checkAudio.isSelected());
+        config.setWantSubtitles(checkSubs.isSelected());
+        // Primary type for legacy paths
+        if (checkVideo.isSelected())      config.setDownloadType(DownloadConfig.DownloadType.VIDEO);
+        else if (checkAudio.isSelected()) config.setDownloadType(DownloadConfig.DownloadType.AUDIO);
         else                              config.setDownloadType(DownloadConfig.DownloadType.SUBTITLES);
 
-        // ── Quality ──
-        if      (qBest.isSelected()) config.setVideoQuality(DownloadConfig.VideoQuality.BEST);
-        else if (q1080.isSelected()) config.setVideoQuality(DownloadConfig.VideoQuality.Q1080);
-        else if (q720.isSelected())  config.setVideoQuality(DownloadConfig.VideoQuality.Q720);
-        else if (q480.isSelected())  config.setVideoQuality(DownloadConfig.VideoQuality.Q480);
-        else if (q360.isSelected())  config.setVideoQuality(DownloadConfig.VideoQuality.Q360);
-
-        // v1.3 - if a format was picked via the Quality Picker (non-YouTube URL), use it.
-        if (pickedFormatId != null && !pickedFormatId.isBlank()) {
+        // ── Quality (combo wins over stale Quality-Picker id) ──
+        config.setPickedFormatId("");
+        if (checkVideo.isSelected()) {
+            VideoQualityOption q = qualityCombo.getSelectionModel().getSelectedItem();
+            if (q != null && q.formatSpec() != null && !q.formatSpec().isBlank()) {
+                config.setPickedFormatId(q.formatSpec());
+            }
+        } else if (pickedFormatId != null && !pickedFormatId.isBlank()) {
             config.setPickedFormatId(pickedFormatId);
-            log("Using picked format id: " + pickedFormatLabel);
         }
 
         // ── Subtitles ──
@@ -772,12 +823,49 @@ public class MainController {
     }
 
     private void updateOptionsVisibility() {
-        boolean isVideo = radioVideo.isSelected();
-        boolean isSubs  = radioSubs.isSelected();
-        showSection(videoQualityBox, isVideo);
-        showSection(subtitleOptionsBox, isVideo || isSubs);
-        embedSubsCheck.setVisible(isVideo);
-        embedSubsCheck.setManaged(isVideo);
+        boolean wantsVideo = checkVideo.isSelected();
+        boolean wantsSubs  = checkSubs.isSelected();
+        showSection(videoQualityBox, wantsVideo);
+        showSection(subtitleOptionsBox, wantsVideo || wantsSubs);
+        embedSubsCheck.setVisible(wantsVideo);
+        embedSubsCheck.setManaged(wantsVideo);
+    }
+
+    /** Load real available heights (720p–4K) from yt-dlp after Analyze. */
+    private void refreshAvailableQualities(String url, String proxyUrl, String cookiesPath) {
+        qualityCombo.getItems().setAll(VideoQualityOption.bestFallback());
+        qualityCombo.getSelectionModel().selectFirst();
+        if (qualityHintLabel != null) {
+            qualityHintLabel.setText("Loading available qualities…");
+        }
+        Task<List<VideoQualityOption>> task = new Task<>() {
+            @Override
+            protected List<VideoQualityOption> call() {
+                return ytDlpService.fetchAvailableVideoQualities(url, proxyUrl, cookiesPath);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            List<VideoQualityOption> options = task.getValue();
+            if (options == null || options.isEmpty()) {
+                options = List.of(VideoQualityOption.bestFallback());
+            }
+            qualityCombo.getItems().setAll(options);
+            qualityCombo.getSelectionModel().selectFirst();
+            if (qualityHintLabel != null) {
+                qualityHintLabel.setText(options.size() <= 1
+                        ? "Could not list formats — using Best. Update yt-dlp/cookies and re-analyze."
+                        : "Found " + (options.size() - 1) + " format(s) for this video (all listed).");
+            }
+            log("Available qualities: " + options.size());
+        });
+        task.setOnFailed(e -> {
+            qualityCombo.getItems().setAll(VideoQualityOption.bestFallback());
+            qualityCombo.getSelectionModel().selectFirst();
+            if (qualityHintLabel != null) {
+                qualityHintLabel.setText("Quality list unavailable — using Best available.");
+            }
+        });
+        new Thread(task, "quality-fetch").start();
     }
 
     private void updateSelectionCount() {
@@ -851,23 +939,16 @@ public class MainController {
             outputDirField.setText(s.defaultOutputDir != null ? s.defaultOutputDir
                     : System.getProperty("user.home") + File.separator + "Downloads");
         }
-        // Download type radio buttons
+        // Download type defaults
         if (s.defaultDownloadType != null) {
-            switch (s.defaultDownloadType) {
-                case VIDEO     -> radioVideo.setSelected(true);
-                case AUDIO     -> radioAudio.setSelected(true);
-                case SUBTITLES -> radioSubs.setSelected(true);
-            }
+            checkVideo.setSelected(s.defaultDownloadType == DownloadConfig.DownloadType.VIDEO);
+            checkAudio.setSelected(s.defaultDownloadType == DownloadConfig.DownloadType.AUDIO);
+            checkSubs.setSelected(s.defaultDownloadType == DownloadConfig.DownloadType.SUBTITLES);
         }
         // Quality
         if (s.defaultQuality != null) {
-            switch (s.defaultQuality) {
-                case BEST  -> qBest.setSelected(true);
-                case Q1080 -> q1080.setSelected(true);
-                case Q720  -> q720.setSelected(true);
-                case Q480  -> q480.setSelected(true);
-                case Q360  -> q360.setSelected(true);
-            }
+            // Legacy preset — combo refreshed on Analyze; keep Best until then.
+            qualityCombo.getSelectionModel().selectFirst();
         }
         // Subtitles
         if (s.defaultSubtitleLangs != null) subLangField.setText(s.defaultSubtitleLangs);
@@ -881,6 +962,12 @@ public class MainController {
             }
         }
         embedSubsCheck.setSelected(s.defaultEmbedSubs);
+        // Cookies default from Settings (Download tab field is optional override)
+        if (cookiesField.getText() == null || cookiesField.getText().isBlank()) {
+            if (s.defaultCookiesPath != null && !s.defaultCookiesPath.isBlank()) {
+                cookiesField.setText(s.defaultCookiesPath);
+            }
+        }
         // Proxy defaults
         useProxyCheck.setSelected(s.defaultUseProxy);
         if (s.defaultProxyHost != null) proxyHostField.setText(s.defaultProxyHost);
@@ -1000,27 +1087,7 @@ public class MainController {
 
     /** Build a per-video copy of a playlist {@link DownloadConfig}, restricted to one index. */
     private DownloadConfig cloneConfigForSingleIndex(DownloadConfig src, int index) {
-        DownloadConfig c = new DownloadConfig();
-        c.setUrl(src.getUrl());
-        c.setStrategy(src.getStrategy());
-        c.setOutputDir(src.getOutputDir());
-        c.setCookiesPath(src.getCookiesPath());
-        c.setDownloadType(src.getDownloadType());
-        c.setVideoQuality(src.getVideoQuality());
-        c.setSubtitleLanguages(src.getSubtitleLanguages());
-        c.setSubFormat(src.getSubFormat());
-        c.setSubType(src.getSubType());
-        c.setEmbedSubtitles(src.isEmbedSubtitles());
-        c.setUseProxy(src.isUseProxy());
-        c.setProxyHost(src.getProxyHost());
-        c.setProxyPort(src.getProxyPort());
-        c.setInvidiousInstance(src.getInvidiousInstance());
-        c.setInvidiousAutoRotate(src.isInvidiousAutoRotate());
-        c.setGithubRepo(src.getGithubRepo());
-        c.setGithubWorkflow(src.getGithubWorkflow());
-        c.setGithubBranch(src.getGithubBranch());
-        c.setGithubToken(src.getGithubToken());
-        c.setPickedFormatId(src.getPickedFormatId());
+        DownloadConfig c = src.duplicate();
         c.setPlaylist(true);
         c.setDownloadAll(false);
         c.setSelectedIndices(java.util.List.of(index));

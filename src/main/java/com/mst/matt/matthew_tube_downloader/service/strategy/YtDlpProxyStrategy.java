@@ -6,6 +6,7 @@ import com.mst.matt.matthew_tube_downloader.service.YtDlpService;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -79,11 +80,14 @@ public class YtDlpProxyStrategy implements DownloadStrategy {
         logSink.accept("Command: " + String.join(" ", cmd));
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.environment().put("PYTHONIOENCODING", "utf-8");
+        pb.environment().put("PYTHONUTF8", "1");
         pb.redirectErrorStream(true);
         Process process = pb.start();
         currentProcess = process;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (cancelCheck.getAsBoolean()) {

@@ -67,10 +67,10 @@ public class ToolStatus {
             if (version != null) this.version.set(version);
             if (latest  != null) this.latest.set(latest);
             switch (s) {
-                case OK       -> { statusLabel.set("✓ OK");              actionLabel.set("Reinstall / Update"); }
-                case OUTDATED -> { statusLabel.set("⚠ Update available"); actionLabel.set("Update");             }
-                case MISSING  -> { statusLabel.set("✗ Not installed");    actionLabel.set("Install");            }
-                case UNKNOWN  -> { statusLabel.set("? Unknown");          actionLabel.set("Check");              }
+                case OK       -> { statusLabel.set("✓ Up to date");     actionLabel.set(""); }
+                case OUTDATED -> { statusLabel.set("⚠ Update available"); actionLabel.set("Update"); }
+                case MISSING  -> { statusLabel.set("✗ Not installed");   actionLabel.set("Install"); }
+                case UNKNOWN  -> { statusLabel.set("? Unknown");         actionLabel.set("Check"); }
             }
         });
     }

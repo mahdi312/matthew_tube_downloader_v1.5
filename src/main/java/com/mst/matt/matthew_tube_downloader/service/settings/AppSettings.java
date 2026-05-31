@@ -40,6 +40,13 @@ public class AppSettings {
     public String  defaultProxyHost = "127.0.0.1";
     public String  defaultProxyPort = "10808";
 
+    /** Netscape-format cookies.txt for yt-dlp (analyze + download when the file exists). */
+    public String defaultCookiesPath = "";
+
+    /** YouTube PO Token via bgutil HTTP server — off by default; enable in Settings when server runs. */
+    public boolean usePotProvider = false;
+    public String potProviderHttpUrl = "http://127.0.0.1:4416";
+
     // ── Strategy-specific defaults ──
     public String  invidiousDefaultInstance = "";
     public boolean invidiousDefaultAutoRotate = true;
@@ -76,6 +83,9 @@ public class AppSettings {
         c.defaultUseProxy = defaultUseProxy;
         c.defaultProxyHost = defaultProxyHost;
         c.defaultProxyPort = defaultProxyPort;
+        c.defaultCookiesPath = defaultCookiesPath;
+        c.usePotProvider = usePotProvider;
+        c.potProviderHttpUrl = potProviderHttpUrl;
         c.invidiousDefaultInstance = invidiousDefaultInstance;
         c.invidiousDefaultAutoRotate = invidiousDefaultAutoRotate;
         c.githubDefaultRepo = githubDefaultRepo;

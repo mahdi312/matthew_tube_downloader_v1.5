@@ -2,6 +2,7 @@ package com.mst.matt.matthew_tube_downloader.service.scheduler;
 
 import com.mst.matt.matthew_tube_downloader.model.DownloadConfig;
 import com.mst.matt.matthew_tube_downloader.model.VideoInfo;
+import com.mst.matt.matthew_tube_downloader.service.MultiTypeDownloadRunner;
 import com.mst.matt.matthew_tube_downloader.service.YtDlpService;
 import com.mst.matt.matthew_tube_downloader.service.settings.AppSettings;
 import com.mst.matt.matthew_tube_downloader.service.settings.SettingsManager;
@@ -368,8 +369,8 @@ public class DownloadScheduler {
 
                 VideoInfo dummy = new VideoInfo(1, item.label, "", "", item.config.getUrl());
 
-                int exit = strategy.downloadOne(
-                        item.config, dummy, log,
+                int exit = MultiTypeDownloadRunner.runAllTypes(
+                        item.config, dummy, strategy, log,
                         (frac, label) -> {
                             if (frac != null && frac >= 0) item.setProgress(frac);
                             if (label != null && !label.isBlank()) item.setLastMessage(label);

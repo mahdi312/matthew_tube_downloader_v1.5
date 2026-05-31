@@ -56,6 +56,33 @@
             </HBox>
         </VBox>
 
+        <!-- ── yt-dlp cookies ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="yt-dlp cookies" styleClass="section-label"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Cookies file:" styleClass="field-label"/>
+                <TextField fx:id="defaultCookiesField" HBox.hgrow="ALWAYS"
+                           promptText="cookies.txt (Netscape format)"/>
+                <Button text="📁 Browse" onAction="#onBrowseCookies" styleClass="small-btn"/>
+            </HBox>
+            <Label text="Used automatically for URL analyze and downloads when the file exists. Export from your browser in Netscape format."
+                   wrapText="true" styleClass="status-label"/>
+        </VBox>
+
+        <!-- ── YouTube PO Token (optional) ── -->
+        <VBox spacing="8" styleClass="section-box">
+            <Label text="YouTube PO Token (optional)" styleClass="section-label"/>
+            <CheckBox fx:id="usePotProviderCheck"
+                      text="Enable PO Token generation (bgutil HTTP server)"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Server URL:" styleClass="field-label"/>
+                <TextField fx:id="potProviderUrlField" HBox.hgrow="ALWAYS"
+                           promptText="http://127.0.0.1:4416"/>
+            </HBox>
+            <Label text="Off by default. Uses android/tv/web clients + cookies (360p–1080p). For PO tokens: Tools → bgutil-pot → Setup, start HTTP server (see Tools hints), then enable here."
+                   wrapText="true" styleClass="status-label"/>
+        </VBox>
+
         <!-- ── Proxy defaults ── -->
         <VBox spacing="8" styleClass="section-box">
             <Label text="Proxy defaults" styleClass="section-label"/>

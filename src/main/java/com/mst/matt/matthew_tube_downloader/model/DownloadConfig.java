@@ -2,6 +2,7 @@ package com.mst.matt.matthew_tube_downloader.model;
 
 import com.mst.matt.matthew_tube_downloader.service.strategy.StrategyType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,6 +22,10 @@ public class DownloadConfig {
     private String outputDir;
     private String cookiesPath;
     private DownloadType downloadType = DownloadType.VIDEO;
+    /** v1.5 — user may select multiple outputs (video file, audio file, subtitle files). */
+    private boolean wantVideo = true;
+    private boolean wantAudio = false;
+    private boolean wantSubtitles = false;
     private VideoQuality videoQuality = VideoQuality.BEST;
     private String subtitleLanguages = "en";
     private SubFormat subFormat = SubFormat.SRT;
@@ -70,6 +75,57 @@ public class DownloadConfig {
 
     public DownloadType getDownloadType() { return downloadType; }
     public void setDownloadType(DownloadType downloadType) { this.downloadType = downloadType; }
+
+    public boolean isWantVideo() { return wantVideo; }
+    public void setWantVideo(boolean wantVideo) { this.wantVideo = wantVideo; }
+
+    public boolean isWantAudio() { return wantAudio; }
+    public void setWantAudio(boolean wantAudio) { this.wantAudio = wantAudio; }
+
+    public boolean isWantSubtitles() { return wantSubtitles; }
+    public void setWantSubtitles(boolean wantSubtitles) { this.wantSubtitles = wantSubtitles; }
+
+    /** Ordered list of download passes to run (video → audio → subtitles). */
+    public List<DownloadType> getSelectedDownloadTypes() {
+        List<DownloadType> types = new ArrayList<>(3);
+        if (wantVideo) types.add(DownloadType.VIDEO);
+        if (wantAudio) types.add(DownloadType.AUDIO);
+        if (wantSubtitles) types.add(DownloadType.SUBTITLES);
+        if (types.isEmpty()) types.add(downloadType != null ? downloadType : DownloadType.VIDEO);
+        return types;
+    }
+
+    /** Shallow copy for multi-type download passes. */
+    public DownloadConfig duplicate() {
+        DownloadConfig c = new DownloadConfig();
+        c.url = url;
+        c.outputDir = outputDir;
+        c.cookiesPath = cookiesPath;
+        c.downloadType = downloadType;
+        c.wantVideo = wantVideo;
+        c.wantAudio = wantAudio;
+        c.wantSubtitles = wantSubtitles;
+        c.videoQuality = videoQuality;
+        c.subtitleLanguages = subtitleLanguages;
+        c.subFormat = subFormat;
+        c.subType = subType;
+        c.embedSubtitles = embedSubtitles;
+        c.useProxy = useProxy;
+        c.proxyHost = proxyHost;
+        c.proxyPort = proxyPort;
+        c.isPlaylist = isPlaylist;
+        c.downloadAll = downloadAll;
+        c.selectedIndices = selectedIndices == null ? null : new ArrayList<>(selectedIndices);
+        c.strategy = strategy;
+        c.invidiousInstance = invidiousInstance;
+        c.invidiousAutoRotate = invidiousAutoRotate;
+        c.githubRepo = githubRepo;
+        c.githubWorkflow = githubWorkflow;
+        c.githubBranch = githubBranch;
+        c.githubToken = githubToken;
+        c.pickedFormatId = pickedFormatId;
+        return c;
+    }
 
     public VideoQuality getVideoQuality() { return videoQuality; }
     public void setVideoQuality(VideoQuality videoQuality) { this.videoQuality = videoQuality; }
@@ -131,6 +187,14 @@ public class DownloadConfig {
     public String getPickedFormatId() { return pickedFormatId; }
     public void setPickedFormatId(String pickedFormatId) { this.pickedFormatId = pickedFormatId; }
 
+    /** True when the user chose a specific yt-dlp format id (quality combo), not a height/best preset. */
+    public boolean isExplicitFormatPick() {
+        if (pickedFormatId == null || pickedFormatId.isBlank()) return false;
+        if (pickedFormatId.contains("height<=")) return false;
+        if (pickedFormatId.startsWith("bestvideo+bestaudio/bestvideo")) return false;
+        return pickedFormatId.matches("^\\d+([+].*)?$") || pickedFormatId.matches("^\\d+\\+bestaudio.*");
+    }
+
     /**
      * Get the proxy URL string for yt-dlp (e.g. "socks5://127.0.0.1:12334").
      */
@@ -153,9 +217,9 @@ public class DownloadConfig {
         return switch (videoQuality) {
             case BEST -> "bestvideo+bestaudio/best";
             case Q1080 -> "bestvideo[height<=1080]+bestaudio/best[height<=1080]";
-            case Q720 -> "bestvideo[height<=?720]+bestaudio/best[height<=?720]";
-            case Q480 -> "bestvideo[height<=?480]+bestaudio/best[height<=?480]";
-            case Q360 -> "bestvideo[height<=?360]+bestaudio/best[height<=?360]";
+            case Q720 -> "bestvideo[height<=720]+bestaudio/best[height<=720]/best";
+            case Q480 -> "bestvideo[height<=480]+bestaudio/best[height<=480]/best";
+            case Q360 -> "bestvideo[height<=360]+bestaudio/best[height<=360]/best";
         };
     }
 

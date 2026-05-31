@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Loads / saves {@link AppSettings} as JSON in the user's config directory.
@@ -80,4 +81,28 @@ public final class SettingsManager {
 
     /** Replace the in-memory cache (e.g. after Settings tab applies changes). */
     public static synchronized void replace(AppSettings s) { save(s); }
+
+    /**
+     * Resolve the cookies file for yt-dlp.
+     * Download-tab override wins; otherwise use {@link AppSettings#defaultCookiesPath}
+     * when that file exists on disk.
+     */
+    public static String resolveCookiesPath(String downloadTabOverride) {
+        String override = downloadTabOverride == null ? "" : downloadTabOverride.trim();
+        if (!override.isEmpty() && Files.isRegularFile(Path.of(override))) {
+            return override;
+        }
+        String fromSettings = load().defaultCookiesPath;
+        if (fromSettings != null && !fromSettings.isBlank()) {
+            String path = fromSettings.trim();
+            if (Files.isRegularFile(Path.of(path))) return path;
+        }
+        return null;
+    }
+
+    /** True when a cookies path is configured (even if the file is missing). */
+    public static boolean hasCookiesConfigured(String downloadTabOverride) {
+        return !Objects.toString(downloadTabOverride, "").trim().isEmpty()
+                || !Objects.toString(load().defaultCookiesPath, "").trim().isEmpty();
+    }
 }

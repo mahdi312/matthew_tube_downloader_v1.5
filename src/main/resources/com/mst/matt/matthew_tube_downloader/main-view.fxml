@@ -143,35 +143,27 @@
                     </HBox>
                 </VBox>
 
-                <!-- ── Download Type ── -->
+                <!-- ── Download Type (multi-select) ── -->
                 <VBox fx:id="downloadTypeBox" spacing="8" styleClass="section-box" visible="false" managed="false">
-                    <Label text="Download Type" styleClass="section-label"/>
-                    <HBox spacing="12" alignment="CENTER_LEFT">
-                        <RadioButton fx:id="radioVideo" text="🎬 Video + Audio + Subs"
-                                     toggleGroup="$downloadTypeGroup" selected="true"/>
-                        <RadioButton fx:id="radioAudio" text="🎵 Audio Only"
-                                     toggleGroup="$downloadTypeGroup"/>
-                        <RadioButton fx:id="radioSubs" text="📝 Subtitles Only"
-                                     toggleGroup="$downloadTypeGroup"/>
+                    <Label text="Download Type (select one or more)" styleClass="section-label"/>
+                    <HBox spacing="16" alignment="CENTER_LEFT">
+                        <CheckBox fx:id="checkVideo" text="🎬 Video (+ optional embedded subs)" selected="true"/>
+                        <CheckBox fx:id="checkAudio" text="🎵 Audio only"/>
+                        <CheckBox fx:id="checkSubs" text="📝 Subtitle files only"/>
                     </HBox>
-                    <fx:define>
-                        <ToggleGroup fx:id="downloadTypeGroup"/>
-                    </fx:define>
+                    <Label text="Each selected type is downloaded as a separate file/pass."
+                           wrapText="true" styleClass="status-label"/>
                 </VBox>
 
-                <!-- ── Video Quality (shown when Video selected) ── -->
+                <!-- ── Video Quality (populated after Analyze) ── -->
                 <VBox fx:id="videoQualityBox" spacing="8" styleClass="section-box" visible="false" managed="false">
                     <Label text="Video Quality" styleClass="section-label"/>
-                    <HBox spacing="12" alignment="CENTER_LEFT">
-                        <RadioButton fx:id="qBest" text="Best" toggleGroup="$qualityGroup" selected="true"/>
-                        <RadioButton fx:id="q1080" text="1080p" toggleGroup="$qualityGroup"/>
-                        <RadioButton fx:id="q720" text="720p" toggleGroup="$qualityGroup"/>
-                        <RadioButton fx:id="q480" text="480p" toggleGroup="$qualityGroup"/>
-                        <RadioButton fx:id="q360" text="360p" toggleGroup="$qualityGroup"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Available:" styleClass="field-label"/>
+                        <ComboBox fx:id="qualityCombo" prefWidth="360" promptText="Analyze URL first…"/>
                     </HBox>
-                    <fx:define>
-                        <ToggleGroup fx:id="qualityGroup"/>
-                    </fx:define>
+                    <Label fx:id="qualityHintLabel" text="Qualities are read from the video after Analyze (includes 2K/4K when available)."
+                           wrapText="true" styleClass="status-label"/>
                 </VBox>
 
                 <!-- ── Subtitle Options ── -->
@@ -214,7 +206,7 @@
                     </HBox>
                     <HBox spacing="8" alignment="CENTER_LEFT">
                         <Label text="Cookies:" styleClass="field-label"/>
-                        <TextField fx:id="cookiesField" promptText="cookies.txt (optional)"
+                        <TextField fx:id="cookiesField" promptText="Override cookies path (default from Settings)"
                                    HBox.hgrow="ALWAYS"/>
                         <Button fx:id="browseCookiesBtn" text="📁 Browse" onAction="#onBrowseCookies"
                                 styleClass="small-btn"/>

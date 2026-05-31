@@ -1,6 +1,7 @@
 package com.mst.matt.matthew_tube_downloader.controller;
 
 import com.mst.matt.matthew_tube_downloader.model.DownloadConfig;
+import com.mst.matt.matthew_tube_downloader.service.dependency.PotProviderHelper;
 import com.mst.matt.matthew_tube_downloader.service.settings.AppSettings;
 import com.mst.matt.matthew_tube_downloader.service.settings.SettingsManager;
 import com.mst.matt.matthew_tube_downloader.service.settings.ThemeManager;
@@ -8,6 +9,7 @@ import com.mst.matt.matthew_tube_downloader.service.strategy.StrategyType;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.util.function.Consumer;
@@ -41,6 +43,10 @@ public class SettingsController {
     @FXML private CheckBox defaultUseProxyCheck;
     @FXML private TextField defaultProxyHostField;
     @FXML private TextField defaultProxyPortField;
+    @FXML private TextField defaultCookiesField;
+
+    @FXML private CheckBox usePotProviderCheck;
+    @FXML private TextField potProviderUrlField;
 
     @FXML private TextField invidiousInstanceField;
     @FXML private CheckBox  invidiousAutoRotateCheck;
@@ -105,6 +111,10 @@ public class SettingsController {
         defaultUseProxyCheck.setSelected(s.defaultUseProxy);
         defaultProxyHostField.setText(s.defaultProxyHost);
         defaultProxyPortField.setText(s.defaultProxyPort);
+        defaultCookiesField.setText(s.defaultCookiesPath != null ? s.defaultCookiesPath : "");
+
+        usePotProviderCheck.setSelected(s.usePotProvider);
+        potProviderUrlField.setText(s.potProviderHttpUrl != null ? s.potProviderHttpUrl : "");
 
         invidiousInstanceField.setText(s.invidiousDefaultInstance);
         invidiousAutoRotateCheck.setSelected(s.invidiousDefaultAutoRotate);
@@ -146,6 +156,13 @@ public class SettingsController {
         s.defaultUseProxy         = defaultUseProxyCheck.isSelected();
         s.defaultProxyHost        = defaultProxyHostField.getText().trim();
         s.defaultProxyPort        = defaultProxyPortField.getText().trim();
+        s.defaultCookiesPath      = defaultCookiesField.getText().trim();
+
+        s.usePotProvider          = usePotProviderCheck.isSelected();
+        s.potProviderHttpUrl      = potProviderUrlField.getText().trim();
+        if (s.potProviderHttpUrl.isBlank()) s.potProviderHttpUrl = "http://127.0.0.1:4416";
+        boolean potEnabledButDown = s.usePotProvider
+                && !PotProviderHelper.isHttpServerReachable(s.potProviderHttpUrl);
 
         s.invidiousDefaultInstance   = invidiousInstanceField.getText().trim();
         s.invidiousDefaultAutoRotate = invidiousAutoRotateCheck.isSelected();
@@ -161,7 +178,9 @@ public class SettingsController {
         }
 
         SettingsManager.save(s);
-        statusLabel.setText("Saved ✓");
+        statusLabel.setText(potEnabledButDown
+                ? "Saved ✓ — PO enabled but HTTP server not reachable; using android/tv/web + cookies until server starts."
+                : "Saved ✓");
         onApplied.accept(s);
     }
 
@@ -193,5 +212,23 @@ public class SettingsController {
         }
         File sel = chooser.showDialog(defaultOutputDirField.getScene().getWindow());
         if (sel != null) defaultOutputDirField.setText(sel.getAbsolutePath());
+    }
+
+    @FXML
+    public void onBrowseCookies() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select cookies.txt (Netscape format)");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Cookies / text", "*.txt", "*.cookies", "*.*"));
+        String current = defaultCookiesField.getText();
+        if (current != null && !current.isBlank()) {
+            File f = new File(current);
+            if (f.getParentFile() != null && f.getParentFile().exists()) {
+                chooser.setInitialDirectory(f.getParentFile());
+            }
+            if (f.isFile()) chooser.setInitialFileName(f.getName());
+        }
+        File sel = chooser.showOpenDialog(defaultCookiesField.getScene().getWindow());
+        if (sel != null) defaultCookiesField.setText(sel.getAbsolutePath());
     }
 }

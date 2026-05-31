@@ -18,8 +18,8 @@ import java.util.Map;
 /**
  * Controller for the "Tools" tab — Feature 1.
  *
- * Shows status of yt-dlp / yt-dlp-proxy / ffmpeg / python / pip, lets the user
- * update or install each one. Every action confirms with a dialog before running.
+ * Shows status of yt-dlp / yt-dlp-proxy / ffmpeg / deno / node / python / pip.
+ * Lets you update or install each one. Every action confirms with a dialog before running.
  */
 public class ToolsController {
 
@@ -59,6 +59,9 @@ public class ToolsController {
         }
         hintsArea.setText(sb.toString());
 
+        updateYtDlpBtn.setVisible(false);
+        updateYtDlpBtn.setManaged(false);
+
         // Trigger a refresh in the background on first show
         onRefreshAll();
     }
@@ -71,6 +74,8 @@ public class ToolsController {
                 btn.getStyleClass().add("small-btn");
                 btn.setOnAction(e -> {
                     ToolStatus t = getTableView().getItems().get(getIndex());
+                    if (t.getState() == ToolStatus.State.OK) return;
+                    if (t.getActionLabel() == null || t.getActionLabel().isBlank()) return;
                     onActionClicked(t);
                 });
                 box.setSpacing(4);
@@ -82,7 +87,15 @@ public class ToolsController {
                     setGraphic(null);
                 } else {
                     ToolStatus t = getTableView().getItems().get(getIndex());
-                    btn.textProperty().bind(t.actionLabelProperty());
+                    String label = t.getActionLabel();
+                    if (label == null || label.isBlank()) {
+                        btn.setText("—");
+                        btn.setDisable(true);
+                    } else {
+                        btn.textProperty().unbind();
+                        btn.setText(label);
+                        btn.setDisable(false);
+                    }
                     setGraphic(box);
                 }
             }
@@ -104,10 +117,12 @@ public class ToolsController {
         t.setOnSucceeded(e -> {
             refreshBtn.setDisable(false);
             log("Refresh complete.");
+            syncYtDlpUpdateButton();
         });
         t.setOnFailed(e -> {
             refreshBtn.setDisable(false);
             log("Refresh failed: " + (t.getException() != null ? t.getException().getMessage() : ""));
+            syncYtDlpUpdateButton();
         });
         new Thread(t, "tools-refresh").start();
     }
@@ -151,6 +166,7 @@ public class ToolsController {
             int code = task.getValue();
             log(code == 0 ? "✓ Done." : "Exited with code " + code);
             deps.refresh(tool, msg -> Platform.runLater(() -> log(msg)));
+            syncYtDlpUpdateButton();
         });
         task.setOnFailed(e -> log("Failed: " + (task.getException() != null ? task.getException().getMessage() : "")));
         new Thread(task, "tools-action").start();
@@ -162,5 +178,15 @@ public class ToolsController {
         } else {
             Platform.runLater(() -> logArea.appendText(message + "\n"));
         }
+    }
+
+    /** Show top “Update yt-dlp” shortcut only when an update/install is actually needed. */
+    private void syncYtDlpUpdateButton() {
+        if (updateYtDlpBtn == null) return;
+        ToolStatus yt = rows.stream().filter(r -> "yt-dlp".equals(r.getName())).findFirst().orElse(null);
+        boolean needed = yt != null && (yt.getState() == ToolStatus.State.OUTDATED
+                || yt.getState() == ToolStatus.State.MISSING);
+        updateYtDlpBtn.setVisible(needed);
+        updateYtDlpBtn.setManaged(needed);
     }
 }
