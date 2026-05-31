@@ -33,8 +33,12 @@ import javafx.stage.Stage;
 
 import java.awt.Desktop;
 import java.io.File;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -1037,10 +1041,15 @@ public class MainController {
         item.label = (contentTitleLabel.getText() != null && !contentTitleLabel.getText().isBlank())
                 ? contentTitleLabel.getText() : cfg.getUrl();
         item.config = cfg;
-        item.setScheduledAt(System.currentTimeMillis());
+        item.setScheduledAt(resolveQueueScheduledAt());
         item.ensureTransients();
         scheduler.add(item);
-        log("➕ Queued: " + item.label);
+        AppSettings s = SettingsManager.load();
+        if (s.queueUseScheduleWindow && s.queueDefaultStartTime != null && !s.queueDefaultStartTime.isBlank()) {
+            log("➕ Queued: " + item.label + " — scheduled at " + s.queueDefaultStartTime);
+        } else {
+            log("➕ Queued: " + item.label);
+        }
     }
 
     /** ➕ Queue each SELECTED playlist video as its own queue item. */
@@ -1069,7 +1078,7 @@ public class MainController {
             QueueItem qi = new QueueItem();
             qi.label = "[" + v.getIndex() + "] " + (v.getTitle() != null ? v.getTitle() : cfg(base).getUrl());
             qi.config = perItem;
-            qi.setScheduledAt(System.currentTimeMillis());
+            qi.setScheduledAt(resolveQueueScheduledAt());
             qi.ensureTransients();
             scheduler.add(qi);
             n++;
@@ -1080,6 +1089,38 @@ public class MainController {
             return;
         }
         log("➕ Queued " + n + " playlist video(s).");
+    }
+
+    /**
+     * Compute the scheduledAt epoch for a new queue item added from the Download tab.
+     *
+     * • If the user configured a schedule window (queueUseScheduleWindow=true) AND a
+     *   queueDefaultStartTime is set, the item is scheduled for today at that time
+     *   (or tomorrow if that time has already passed today).
+     * • Otherwise the item starts immediately (current epoch ms).
+     */
+    private long resolveQueueScheduledAt() {
+        try {
+            AppSettings s = SettingsManager.load();
+            if (s.queueUseScheduleWindow
+                    && s.queueDefaultStartTime != null
+                    && !s.queueDefaultStartTime.isBlank()) {
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("H:mm")
+                        .withResolverStyle(ResolverStyle.LENIENT);
+                LocalTime startTime = LocalTime.parse(s.queueDefaultStartTime.trim(), fmt);
+                LocalDateTime when = LocalDateTime.of(LocalDate.now(), startTime);
+                long epoch = when.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                // If already past today's start time, schedule for tomorrow.
+                if (epoch < System.currentTimeMillis()) {
+                    when = when.plusDays(1);
+                    epoch = when.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                }
+                return epoch;
+            }
+        } catch (Exception ignored) {
+            // Fall through to immediate.
+        }
+        return System.currentTimeMillis();
     }
 
     /** Tiny helper so the IDE doesn't whine about parameter naming. */

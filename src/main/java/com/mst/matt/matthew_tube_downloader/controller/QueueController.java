@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -80,10 +82,13 @@ public class QueueController {
                 (javafx.collections.ListChangeListener<QueueItem>) c -> refreshSelectionInfo());
 
         schedDate.setValue(LocalDate.now());
-        schedTime.setText(LocalTime.now().plusMinutes(15).withSecond(0).withNano(0).toString().substring(0,5));
+        // Pre-fill the schedule time field: use default start time from settings if configured,
+        // otherwise fall back to "now + 15 min".
+        AppSettings s = SettingsManager.load();
+        String defaultSchedTime = resolveDefaultSchedTimeText(s);
+        schedTime.setText(defaultSchedTime);
 
         // v1.4: concurrency spinner — clamp 1..8, default from settings
-        AppSettings s = SettingsManager.load();
         SpinnerValueFactory.IntegerSpinnerValueFactory svf =
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 8,
                         Math.max(1, Math.min(8, s.maxConcurrentDownloads)));
@@ -163,18 +168,100 @@ public class QueueController {
     }
 
     private Long resolveScheduledAt() {
-        if (modeImmediate.isSelected()) return System.currentTimeMillis();
-        if (modeManual.isSelected())    return null;
+        AppSettings s = SettingsManager.load();
+        if (modeManual.isSelected()) return null;
+
+        if (modeImmediate.isSelected()) {
+            // If the user has a schedule window configured, honour the default start time
+            // instead of starting immediately.
+            if (s.queueUseScheduleWindow
+                    && s.queueDefaultStartTime != null
+                    && !s.queueDefaultStartTime.isBlank()) {
+                Long scheduled = buildScheduledAt(s.queueDefaultStartTime, null);
+                if (scheduled != null) return scheduled;
+            }
+            return System.currentTimeMillis();
+        }
+
+        // modeScheduled: parse the date + time fields in the UI.
+        // Also fall back to the settings default start-time if the field is blank.
+        String timeText = schedTime.getText() == null ? "" : schedTime.getText().trim();
+        if (timeText.isBlank() && s.queueDefaultStartTime != null && !s.queueDefaultStartTime.isBlank()) {
+            timeText = s.queueDefaultStartTime;
+        }
         try {
             LocalDate d = schedDate.getValue() == null ? LocalDate.now() : schedDate.getValue();
-            String[] hm = schedTime.getText().trim().split(":");
-            LocalTime t = LocalTime.of(Integer.parseInt(hm[0]), Integer.parseInt(hm[1]));
+            LocalTime t = parseTimeField(timeText);
+            if (t == null) {
+                addStatusLabel.setText("⚠ Invalid time format (use HH:mm). Using immediate.");
+                return System.currentTimeMillis();
+            }
             LocalDateTime when = LocalDateTime.of(d, t);
-            return when.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            long epoch = when.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            // If the chosen datetime is already in the past, advance to next day.
+            if (epoch < System.currentTimeMillis()) {
+                when = when.plusDays(1);
+                epoch = when.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                addStatusLabel.setText("ℹ Scheduled time was in the past — moved to tomorrow.");
+            }
+            return epoch;
         } catch (Exception e) {
             addStatusLabel.setText("⚠ Invalid time format. Using immediate.");
             return System.currentTimeMillis();
         }
+    }
+
+    /**
+     * Build a scheduledAt epoch for the given HH:mm string.
+     * Returns today at that time if still in the future, otherwise tomorrow.
+     * Returns null if parsing fails.
+     */
+    private Long buildScheduledAt(String timeStr, LocalDate baseDate) {
+        try {
+            LocalTime t = parseTimeField(timeStr);
+            if (t == null) return null;
+            LocalDate d = baseDate != null ? baseDate : LocalDate.now();
+            LocalDateTime when = LocalDateTime.of(d, t);
+            long epoch = when.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            if (epoch < System.currentTimeMillis()) {
+                when = when.plusDays(1);
+                epoch = when.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            }
+            return epoch;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Parse a time string like "2:00", "02:00", "14:30" into a LocalTime.
+     * Returns null on failure.
+     */
+    private LocalTime parseTimeField(String text) {
+        if (text == null || text.isBlank()) return null;
+        try {
+            // Accept both "H:mm" and "HH:mm"
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("H:mm")
+                    .withResolverStyle(ResolverStyle.LENIENT);
+            return LocalTime.parse(text.trim(), fmt);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Compute the text to pre-fill into the schedTime field in initialize().
+     * Uses queueDefaultStartTime if the window feature is on and the field is filled,
+     * otherwise uses now+15 min.
+     */
+    private String resolveDefaultSchedTimeText(AppSettings s) {
+        if (s.queueUseScheduleWindow
+                && s.queueDefaultStartTime != null
+                && !s.queueDefaultStartTime.isBlank()) {
+            return s.queueDefaultStartTime;
+        }
+        return LocalTime.now().plusMinutes(15).withSecond(0).withNano(0)
+                .format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
     private DownloadConfig buildDefaultConfig(String url, AppSettings s) {
